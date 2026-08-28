@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,6 +57,8 @@ import java.util.logging.Level;
 public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerConfig
 {
     private static final List<String> DEFAULT_COMMAND_ALIASES = List.of(
+        "rcdoors",
+        "RCDoors",
         "animatedarchitecture",
         "AnimatedArchitecture",
         "aa"
@@ -138,9 +141,9 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
         structureTypeGuiMaterials = new HashMap<>();
 
         header = """
-            # Config file for AnimatedArchitecture. Don't forget to make a backup before making changes!
+            # Config file for RCDoors. Don't forget to make a backup before making changes!
             #
-            # For most options, you can apply your changes using "/animatedarchitecture restart".
+            # For most options, you can apply your changes using "/rcdoors restart".
             # When an option requires a restart, it will be mentioned in the description.
             """;
 
@@ -260,7 +263,7 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
             """;
 
         final String commandAliasesComment = """
-            # List of aliases for the /animatedarchitecture command.
+            # List of aliases for the /rcdoors command.
             # The first alias will be used as the main command.
             # Aliases are case sensitive, can not contain spaces, and should not have a leading slash.
             # Changing this will require a server restart to take effect.
@@ -361,8 +364,8 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
 
         final String consoleLoggingComment = """
             # Write errors and exceptions to console.
-            # If disabled, they will only be written to the AnimatedArchitecture log.
-            # If enabled, they will be written to both the console and the AnimatedArchitecture log.
+            # If disabled, they will only be written to the RCDoors log.
+            # If enabled, they will be written to both the console and the RCDoors log.
             """;
 
         final String logLevelComment = """
@@ -498,7 +501,8 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
             config,
             "commandAliases",
             DEFAULT_COMMAND_ALIASES,
-            commandAliasesComment)
+            commandAliasesComment,
+            ConfigSpigot::normalizeCommandAliases)
         );
 
         if (commandAliases.isEmpty())
@@ -507,6 +511,19 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
                 "No command aliases were found. Using the default aliases: %s", DEFAULT_COMMAND_ALIASES);
             commandAliases.addAll(DEFAULT_COMMAND_ALIASES);
         }
+    }
+
+    /**
+     * Ensures existing configurations gain the RCDoors command names without losing custom or legacy aliases.
+     */
+    static List<String> normalizeCommandAliases(List<String> configuredAliases)
+    {
+        if (configuredAliases.isEmpty())
+            return DEFAULT_COMMAND_ALIASES;
+
+        final LinkedHashSet<String> normalizedAliases = new LinkedHashSet<>(DEFAULT_COMMAND_ALIASES);
+        normalizedAliases.addAll(configuredAliases);
+        return List.copyOf(normalizedAliases);
     }
 
     private Set<IProtectionHookSpigotSpecification> parseProtectionHooks(
@@ -742,7 +759,7 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
         catch (IOException e)
         {
             log.atSevere().withCause(e).log(
-                "Could not save config.yml! Please contact pim16aap2 and show him the following stacktrace:");
+                "Could not save config.yml! Please contact the RCDoors maintainers with this stacktrace:");
         }
     }
 

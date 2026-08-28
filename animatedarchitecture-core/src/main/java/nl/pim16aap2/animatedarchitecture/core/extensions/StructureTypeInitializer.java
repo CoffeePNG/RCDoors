@@ -228,7 +228,7 @@ final class StructureTypeInitializer
         }
 
         log.atFine().log(
-            "Loaded AnimatedArchitecture extension: %s",
+            "Loaded RCDoors extension: %s",
             StringUtil.capitalizeFirstLetter(structureType.getSimpleName())
         );
         return structureType;

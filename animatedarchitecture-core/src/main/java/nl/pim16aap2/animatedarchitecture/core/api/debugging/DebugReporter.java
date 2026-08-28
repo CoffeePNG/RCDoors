@@ -26,13 +26,13 @@ public abstract class DebugReporter
      */
     public final String getDebugReport()
     {
-        final SafeStringBuilder sb = new SafeStringBuilder("AnimatedArchitecture debug dump:\n");
+        final SafeStringBuilder sb = new SafeStringBuilder("RCDoors debug dump:\n");
 
         System.getProperties()
             .forEach((key, val) -> sb.append(String.format("%-30s", key)).append(": ").append(val).append('\n'));
 
         sb.append("\n")
-            .append("AnimatedArchitecture version: ")
+            .append("RCDoors version: ")
             .append(() -> platformProvider
                 .getPlatform()
                 .map(platform -> platform.getProjectVersion().toString())

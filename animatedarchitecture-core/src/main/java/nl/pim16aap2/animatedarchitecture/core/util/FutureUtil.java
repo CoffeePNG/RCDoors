@@ -41,11 +41,11 @@ public final class FutureUtil
             .atMostEvery(30, TimeUnit.SECONDS)
             .withStackTrace(StackSize.FULL)
             .log("""
-                    Possible deadlock detected! Please contact pim16aap2 with the following information:
-                    \s
+                    Possible deadlock detected! Please contact the RCDoors maintainers with the following information:
+
                     Timeout after %dms on %s/%d (Main thread: %b)
                     Context: %s
-                    \s
+
                     Thread dump: %s
                     """,
                 timeoutMs,

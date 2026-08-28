@@ -10,7 +10,7 @@
     <parent>
         <groupId>nl.pim16aap2.animatedarchitecture</groupId>
         <artifactId>animatedarchitecture-spigot</artifactId>
-        <version>0.7.2</version>
+        <version>1.0.0</version>
     </parent>
 
     <properties>
@@ -21,7 +21,7 @@
         <dependency>
             <groupId>nl.pim16aap2.animatedarchitecture</groupId>
             <artifactId>spigot-core</artifactId>
-            <version>0.7.2</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
@@ -88,7 +88,7 @@
                     <descriptors>
                         <descriptor>src/assembly/packaging.xml</descriptor>
                     </descriptors>
-                    <finalName>AnimatedArchitecture-Spigot</finalName>
+                    <finalName>RCDoors</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>

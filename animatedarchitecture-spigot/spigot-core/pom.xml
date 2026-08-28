@@ -8,7 +8,7 @@
     <parent>
         <groupId>nl.pim16aap2.animatedarchitecture</groupId>
         <artifactId>animatedarchitecture-spigot</artifactId>
-        <version>0.7.2</version>
+        <version>1.0.0</version>
     </parent>
 
     <properties>
@@ -16,7 +16,6 @@
 
         <dependency.adventure-api.version>4.18.0</dependency.adventure-api.version>
         <dependency.adventure-bukkit.version>4.3.4</dependency.adventure-bukkit.version>
-        <dependency.bstats.version>3.1.0</dependency.bstats.version>
         <dependency.commodore.version>2.2</dependency.commodore.version>
         <dependency.cloud.version>1.8.4</dependency.cloud.version>
         <dependency.inventory-gui.version>1.6.5-SNAPSHOT</dependency.inventory-gui.version>
@@ -34,24 +33,24 @@
         <dependency>
             <groupId>nl.pim16aap2.animatedarchitecture</groupId>
             <artifactId>spigot-v1_20</artifactId>
-            <version>0.7.2</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>nl.pim16aap2.animatedarchitecture</groupId>
             <artifactId>spigot-v1_21</artifactId>
-            <version>0.7.2</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
             <groupId>nl.pim16aap2.animatedarchitecture</groupId>
             <artifactId>spigot-util</artifactId>
-            <version>0.7.2</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
             <groupId>nl.pim16aap2.animatedarchitecture</groupId>
             <artifactId>hooks-bundle</artifactId>
-            <version>0.7.2</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
@@ -71,15 +70,6 @@
             <artifactId>byte-buddy</artifactId>
             <version>${dependency.bytebuddy.version}</version>
             <scope>provided</scope>
-        </dependency>
-
-        <!-- bStats -->
-        <dependency>
-            <groupId>org.bstats</groupId>
-            <artifactId>bstats-bukkit</artifactId>
-            <version>${dependency.bstats.version}</version>
-            <scope>compile</scope>
-            <optional>true</optional>
         </dependency>
 
         <!-- Vault -->

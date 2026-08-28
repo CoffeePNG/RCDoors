@@ -226,7 +226,7 @@ public final class AnimatedArchitectureSpigotPlatform implements IAnimatedArchit
         databaseManager = animatedArchitectureSpigotComponent.getDatabaseManager();
         if (databaseManager.getDatabaseState() != IStorage.DatabaseState.OK)
             throw new InitializationException(
-                "Failed to initialize AnimatedArchitecture database! Database state: " +
+                "Failed to initialize RCDoors database! Database state: " +
                     databaseManager.getDatabaseState().name()
             );
 
@@ -321,7 +321,7 @@ public final class AnimatedArchitectureSpigotPlatform implements IAnimatedArchit
         }
         if (ret == null)
             throw new InitializationException(
-                "Failed to instantiate the AnimatedArchitecture platform for Spigot: Missing dependency!");
+                "Failed to instantiate the RCDoors platform for Spigot: Missing dependency!");
         return ret;
     }
 

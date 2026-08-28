@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Arrays;
+import java.util.Locale;
 
 /**
  * Implementation of {@link IAnimatedArchitectureToolUtil} for Spigot.
@@ -41,11 +42,14 @@ public class AnimatedArchitectureToolUtilSpigot implements IAnimatedArchitecture
         .get(null);
 
     private final NamespacedKey animatedArchitectureToolKey;
+    private final NamespacedKey legacyAnimatedArchitectureToolKey;
 
     @Inject
     public AnimatedArchitectureToolUtilSpigot(JavaPlugin javaPlugin)
     {
         animatedArchitectureToolKey = new NamespacedKey(javaPlugin, "ANIMATED_ARCHITECTURE_TOOL");
+        legacyAnimatedArchitectureToolKey =
+            new NamespacedKey("animatedarchitecture", "ANIMATED_ARCHITECTURE_TOOL".toLowerCase(Locale.ROOT));
     }
 
     @Override
@@ -105,7 +109,8 @@ public class AnimatedArchitectureToolUtilSpigot implements IAnimatedArchitecture
         if (itemMeta == null)
             return false;
 
-        return itemMeta.getPersistentDataContainer().get(animatedArchitectureToolKey, PersistentDataType.BYTE) != null;
+        return itemMeta.getPersistentDataContainer().has(animatedArchitectureToolKey, PersistentDataType.BYTE) ||
+            itemMeta.getPersistentDataContainer().has(legacyAnimatedArchitectureToolKey, PersistentDataType.BYTE);
     }
 
     @Override

@@ -160,7 +160,7 @@ public final class Step
         if (updatable && value != null)
             argument = arg -> arg.clickable(
                 value,
-                "/AnimatedArchitecture UpdateCreator " + this.getName(),
+                "/rcdoors UpdateCreator " + this.getName(),
                 localizer.getMessage("creator.base.property.info.clickable_message"));
         else
             argument = arg -> arg.highlight(value);

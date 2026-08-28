@@ -126,7 +126,7 @@ public final class CommandManager
                     TextType.INFO,
                     arg -> arg.clickable(
                         localizer.getMessage("commands.spigot.confirmation.message.arg0.message"),
-                        "/AnimatedArchitecture confirm",
+                        "/rcdoors confirm",
                         localizer.getMessage("commands.spigot.confirmation.message.arg0.hint")))),
             sender -> sender.sendError(
                 textFactory,
@@ -143,7 +143,7 @@ public final class CommandManager
             .withCommandExecutionHandler()
             .withDecorator(component -> text()
                 .append(text("[", NamedTextColor.DARK_GRAY))
-                .append(text("AnimatedArchitecture", NamedTextColor.GOLD))
+                .append(text("RCDoors", NamedTextColor.GOLD))
                 .append(text("] ", NamedTextColor.DARK_GRAY))
                 .append(component)
                 .build())
@@ -198,7 +198,7 @@ public final class CommandManager
         Command.Builder<ICommandSender> builder)
     {
         final MinecraftHelp<ICommandSender> minecraftHelp = new MinecraftHelp<>(
-            "/animatedarchitecture help",
+            "/rcdoors help",
             sender -> this.bukkitAudiences.sender(SpigotAdapter.unwrapCommandSender(sender)),
             manager
         );

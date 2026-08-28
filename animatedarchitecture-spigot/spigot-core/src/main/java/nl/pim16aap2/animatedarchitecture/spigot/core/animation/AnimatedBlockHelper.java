@@ -8,11 +8,13 @@ import nl.pim16aap2.animatedarchitecture.spigot.core.animation.recovery.IAnimate
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Entity;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -26,11 +28,15 @@ public final class AnimatedBlockHelper
      * The key used to store the recovery data in the entity's persistent data container.
      */
     private final NamespacedKey recoveryKey;
+    private final NamespacedKey legacyRecoveryKey;
 
     @Inject
     AnimatedBlockHelper(JavaPlugin plugin)
     {
         recoveryKey = new NamespacedKey(plugin, Constants.ANIMATED_ARCHITECTURE_ENTITY_RECOVERY_KEY);
+        legacyRecoveryKey = new NamespacedKey(
+            "animatedarchitecture",
+            Constants.ANIMATED_ARCHITECTURE_ENTITY_RECOVERY_KEY.toLowerCase(Locale.ROOT));
     }
 
     /**
@@ -49,29 +55,39 @@ public final class AnimatedBlockHelper
         if (entity == null)
             return;
 
-        final IAnimatedBlockRecoveryData recoveryData = entity.getPersistentDataContainer().get(
-            recoveryKey,
-            AnimatedBlockRecoveryDataType.INSTANCE);
+        final PersistentDataContainer persistentData = entity.getPersistentDataContainer();
+        @Nullable IAnimatedBlockRecoveryData recoveryData =
+            persistentData.get(recoveryKey, AnimatedBlockRecoveryDataType.INSTANCE);
+        NamespacedKey sourceKey = recoveryKey;
+
+        if (recoveryData == null)
+        {
+            recoveryData = persistentData.get(legacyRecoveryKey, AnimatedBlockRecoveryDataType.INSTANCE);
+            sourceKey = legacyRecoveryKey;
+        }
 
         if (recoveryData == null)
             return;
 
+        final IAnimatedBlockRecoveryData finalRecoveryData = recoveryData;
+        final NamespacedKey finalSourceKey = sourceKey;
+
         log.atFinest().log(
             "Attempting to recover animated block with recovery data '%s'",
             LazyArgs.lazy(
-                () -> entity.getPersistentDataContainer().get(recoveryKey, AnimatedBlockRecoveryDataType.STRING))
+                () -> persistentData.get(finalSourceKey, AnimatedBlockRecoveryDataType.STRING))
         );
 
         try
         {
-            if (recoveryData.recover())
+            if (finalRecoveryData.recover())
                 log.atWarning().log(
                     "Recovered animated block with recovery data '%s'! " +
                         "This is not intended behavior, please contact the author(s) of this plugin!",
-                    recoveryData
+                    finalRecoveryData
                 );
             else
-                log.atFine().log("No recovery action required for data '%s'", recoveryData);
+                log.atFine().log("No recovery action required for data '%s'", finalRecoveryData);
 
             entity.remove();
         }
@@ -80,7 +96,7 @@ public final class AnimatedBlockHelper
             log.atSevere().withCause(e).log(
                 "Failed to recover animated block '%s' from recovery: '%s'",
                 entity,
-                recoveryData
+                finalRecoveryData
             );
         }
     }

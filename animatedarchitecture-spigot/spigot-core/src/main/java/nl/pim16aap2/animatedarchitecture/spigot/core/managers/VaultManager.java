@@ -191,7 +191,7 @@ public final class VaultManager implements IRestartable, IEconomyManager, IPermi
         catch (Exception e)
         {
             log.atSevere().withCause(e).log(
-                "Failed to determine structure creation price! Please contact pim16aap2! "
+                "Failed to determine structure creation price! Please contact the RCDoors maintainers! "
                     + "Include this: '%s' and stacktrace:",
                 formula
             );
@@ -239,7 +239,8 @@ public final class VaultManager implements IRestartable, IEconomyManager, IPermi
         }
         catch (Exception e)
         {
-            log.atSevere().withCause(e).log("Failed to check balance of player %s! Please contact pim16aap2!", player);
+            log.atSevere().withCause(e).log(
+                "Failed to check balance of player %s! Please contact the RCDoors maintainers!", player);
         }
         return defaultValue;
     }
@@ -281,7 +282,7 @@ public final class VaultManager implements IRestartable, IEconomyManager, IPermi
         catch (Exception e)
         {
             log.atSevere().withCause(e).log(
-                "Failed to subtract %f money from player %s! Please contact pim16aap2!",
+                "Failed to subtract %f money from player %s! Please contact the RCDoors maintainers!",
                 amount,
                 player
             );

@@ -105,7 +105,7 @@ public final class DelayedStructureSpecificationInputRequest extends DelayedInpu
             .map(loc -> Math.round(structure.getCuboid().getCenter().getDistance(loc)))
             .orElse(-1L);
 
-        final String cmd = "/animatedarchitecture specify " + structure.getUid();
+        final String cmd = "/rcdoors specify " + structure.getUid();
         final String info = localizer.getMessage("input_request.specify_structure.structure_option.info");
 
         text.append("\n * ", TextType.INFO).append(

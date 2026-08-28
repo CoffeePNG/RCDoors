@@ -1,13 +1,13 @@
-name: Test, build, and upload ArchitectureAnimator
+name: Test, build, and upload RCDoors
 
 on:
   push:
     branches:
-      - master
+      - main
       - 'release/**'
   pull_request:
     branches:
-      - master
+      - main
       - 'release/**'
 
   workflow_dispatch:
@@ -43,11 +43,11 @@ jobs:
         run: mvn --batch-mode -P=docs -DskipTests install antrun:run lombok:delombok javadoc:javadoc javadoc:aggregate
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
 
-      - name: Upload AnimatedArchitecture-Spigot
+      - name: Upload RCDoors
         uses: actions/upload-artifact@v4
         with:
-          name: AnimatedArchitecture-Spigot
-          path: animatedarchitecture-spigot/spigot-packager/target/AnimatedArchitecture-Spigot.jar
+          name: RCDoors
+          path: animatedarchitecture-spigot/spigot-packager/target/RCDoors.jar
           if-no-files-found: error
           compression-level: 0
 

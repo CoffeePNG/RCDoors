@@ -304,7 +304,7 @@ public final class PowerBlockManager extends Restartable implements StructureDel
         {
             if (!isAnimatedArchitectureWorld())
                 return CompletableFuture.failedFuture(
-                    new IllegalStateException("Cannot create PowerBlockChunks in non-AnimatedArchitecture worlds!"));
+                    new IllegalStateException("Cannot create PowerBlockChunks in non-RCDoors worlds!"));
 
             final long chunkId = LocationUtil.getChunkId(loc);
 

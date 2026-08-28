@@ -1,169 +1,115 @@
-# AnimatedArchitecture
+# RCDoors
 
-[![](https://jitpack.io/v/PimvanderLoos/AnimatedArchitecture.svg)](https://jitpack.io/#PimvanderLoos/AnimatedArchitecture)
+> [!IMPORTANT]
+> RCDoors is a RepubliCraft-maintained fork of
+> [AnimatedArchitecture](https://github.com/PimvanderLoos/AnimatedArchitecture), based on upstream commit
+> [`e9dbef69bb6f0ab872130a5922d72a6b0b78c3d6`](https://github.com/PimvanderLoos/AnimatedArchitecture/commit/e9dbef69bb6f0ab872130a5922d72a6b0b78c3d6).
+> It is a modified build and is not an official upstream release. See [FORK_NOTICE.md](FORK_NOTICE.md) for attribution
+> and compatibility details.
 
-AnimatedArchitecture is a plugin for the Minecraft server mod [Spigot](https://spigotmc.org). Its aim is to enhance your
-server with animated blocks that can be used to create many kinds of animated architectural structures.
+RCDoors provides animated, block-based structures for the RepubliCraft server. It is maintained for the server stack
+used by RepubliCraft, with RCDoors branding for players and administrators while retaining the upstream internals needed
+to migrate existing installations safely.
 
-AnimatedArchitecture is a rewrite of the old BigDoors plugin. You can find the legacy BigDoors plugin
-[here](https://github.com/PimvanderLoos/BigDoors/).
+## Supported environment
 
-## Preview
+- Paper 1.21.4
+- Java 21 or newer
+- Vault
 
-[![AnimatedArchitecture Showcase](https://img.youtube.com/vi/45TwFLBv8yY/0.jpg)](https://www.youtube.com/watch?v=45TwFLBv8yY)<br>
-(Click the image to go to YouTube and watch the video)
+RCDoors is built and tested for Paper 1.21.4. Other server versions or implementations are outside this fork's support
+target.
 
-## Supported structure types
-The following structure types are currently supported:
-- Big Doors
+## Structure types
+
+- Big doors
 - Clocks that display the in-game time
 - Drawbridges
 - Flags
-- Garage Doors
+- Garage doors
 - Portcullises
-- Revolving Doors
-- Sliding Doors
+- Revolving doors
+- Sliding doors
 - Windmills
 
-## Using AnimatedArchitecture
+## Installation
 
-### Requirements:
+1. Install Vault on the server.
+2. Place `RCDoors.jar` in the server's `plugins` directory.
+3. Start or restart the server.
+4. Review the generated files in `plugins/RCDoors` before opening the server to players.
 
-* Java 21+
-* A Spigot server (or a fork of Spigot) for Minecraft 1.20+
-* Vault
+The primary command is `/rcdoors`. The legacy `/animatedarchitecture` and `/aa` aliases remain available for existing
+scripts, command blocks, integrations, and administrator workflows.
 
-### Installation:
+## Migrating from AnimatedArchitecture
 
-* Grab the files of the latest [release](https://github.com/PimvanderLoos/AnimatedArchitecture/releases). You will need
-  to grab the `AnimatedArchitecture-Spigot.jar` file.
-* Place the `AnimatedArchitecture-Spigot.jar` in the plugins directory of your server.
-* (Re)start your server.
-* Optionally, configure the plugin to your liking by editing the config files in the newly generated
-  `AnimatedArchitecture` folder.
+RCDoors deliberately preserves the upstream database format, internal namespaces, extension identifiers, permission
+nodes, and legacy command aliases. It also recognizes persistent-data keys written under the legacy plugin namespace.
+Existing structures and integrations can therefore move to this fork without a data conversion.
 
-### Importing BigDoors' Database
+1. Stop the server completely.
+2. Back up the server, including the complete `plugins/AnimatedArchitecture` data directory.
+3. Remove the old `AnimatedArchitecture-Spigot.jar` from `plugins`. Do not run both plugins at the same time.
+4. Leave the existing `plugins/AnimatedArchitecture` directory in place, install `RCDoors.jar`, and start the server.
+5. On its first start, RCDoors copies files missing from `plugins/RCDoors` out of the legacy directory. Existing RCDoors
+   files are never overwritten, and the original directory is left unchanged.
+6. Verify the console startup, open the RCDoors menu, and test representative structures before normal use.
 
-As of [release](https://github.com/PimvanderLoos/BigDoors/releases) Alpha 0.1.8.44, BigDoors has a command that allows
-you to export the old database to the new format. Newer versions may contain additional improvements to the export
-process, so it is recommended to use the latest version of BigDoors to export your database.
+After a successful import attempt, RCDoors writes a marker so later starts do not repeat the migration. If you need to
+merge data manually, stop the server and back up both directories first.
 
-While running a supported version, you can run the `BigDoors PrepareDatabaseForV2` command <b>in
-the console</b> to export the database. Read the output in the console to see if everything was exported correctly.
-Running this command does not affect the existing database for BigDoors.
+Existing permission assignments continue to use the legacy `animatedarchitecture.*` nodes. This is intentional
+compatibility behavior, not incomplete branding. Existing custom extensions continue to use their original manifests
+and internal API names.
 
-After the export process has completed, you can copy the new `structures.db` file out of the `BigDoors` folder into
-the `AnimatedArchitecture` folder. You will now be able to use the structures you created in BigDoors!
+### Migrating from BigDoors
 
-Please note that the export process may not always produce a perfect conversion, potentially leading to minor
-inconsistencies, such as incorrect opening directions under certain circumstances. Despite these occasional
-discrepancies, the majority of exported structures should function properly. Any errors can be easily rectified in-game
-using available commands or the menu.
+Use a compatible BigDoors release to run `BigDoors PrepareDatabaseForV2` from the server console. After BigDoors
+finishes exporting, stop the server and follow the migration instructions produced by that BigDoors version. Back up
+the complete source and destination data directories first; legacy exports can occasionally require in-game corrections
+to opening directions.
 
-## Translations
+## Building
 
-### Official translations
+Build requirements:
 
-Official translations are managed through [Weblate](https://hosted.weblate.org/projects/AnimatedArchitecture/):
+- JDK 21+
+- Maven
 
-<a href="https://hosted.weblate.org/engage/AnimatedArchitecture/">
-<img src="https://hosted.weblate.org/widgets/AnimatedArchitecture/-/multi-auto.svg" alt="Translation status" />
-</a>
+From the repository root, create the production package with:
 
-### Custom translations
-
-By default, the plugin will use the messages from `localization/translations.bundle`.
-This file is regenerated every time the plugin restart, so please do not edit this file manually.
-
-All translation keys used by the plugin are also written to a `localization/translations.properties` file.</br>
-When you provide one or more keys with a value, the plugin will create a new file the next time it restarts:
-`localization/translations_patched.properties`. This file contains the same data as the 'base' bundle, except for any
-lines you changed in the properties file.</br>
-To put it simply, you can override any of the official translations using the properties file.
-
-One thing to keep in mind when trying to override translations is that it respects the locale entry.
-This means that the `translations.properties` file only overrides the base localization messages.
-The way the localization system works, is that it first tries to get the translated message from the locale defined in
-the config, and, if that does not exist, from the base localization file.
-
-For example, if you set the locale to `nl_NL` (Dutch) in the config, the plugin will try to retrieve messages from
-`translations_nl_NL.properties` first. If no value is provided for the key the plugin is looking for, it will try the
-`translations.properties` file next.
-
-So, if you have set your locale to `nl_NL` in the config and want to override the default translations,
-follow these steps:
-
-1) Copy `translations.properties` to `translations_nl_NL.properties`.
-2) Apply the changes you wish to make.
-    * You can check the files in `localization/translations.bundle` to see the current translations.
-3) Restart either the server or the plugin.
-    * You can restart the plugin with `/AnimatedArchitecture restart`
-
-## Compiling AnimatedArchitecture
-
-Compilation requirements:
-
-* Java 21+
-* Maven
-
-You can then compile the project by running the following command in this directory:
-
-```mvn package```
-
-To also run all the tests, static analysis tools etc., you can run the following command:
-
-```mvn -P=errorprone test package checkstyle:checkstyle pmd:check```
-
-The `AnimatedArchitecture-Spigot.jar` file can then be found
-in `animatedarchitecture-spigot/spigot-core/target/AnimatedArchitecture-Spigot.jar`.</br>
-The jars for each structure type can be found in `structures/StructuresOutput/<StructureType>.jar`.
-
-## Developers
-
-This project can be included as a dependency using [JitPack](https://jitpack.io/#PimvanderLoos/AnimatedArchitecture).
-
-For the `artifactId` field, you can use any of the `core` modules. For the following examples below, we will
-use `spigot-core`. This module contains the implementations for the Spigot platform, as well as some utility methods and
-classes that make it easier to work with.
-
-You could also use `animatedarchitecture-core` if you wish to only use the API and not the Spigot platform.
-
-### Maven
-
-```xml
-
-<repositories>
-    <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
-    </repository>
-</repositories>
+```shell
+mvn clean package
 ```
 
-```xml
+The deployable plugin is written to:
 
-<dependencies>
-    <dependency>
-        <groupId>com.github.PimvanderLoos.AnimatedArchitecture</groupId>
-        <artifactId>spigot-core</artifactId>
-        <version>0.5</version>
-        <scope>provided</scope>
-    </dependency>
-</dependencies>
+```text
+animatedarchitecture-spigot/spigot-packager/target/RCDoors.jar
 ```
 
-### Gradle
+To run the extended verification suite used by the upstream project:
 
-```gradle
-repositories {
-    maven { url "https://jitpack.io/" }
-}
-
-dependencies {
-    compileOnly("com.github.PimvanderLoos.AnimatedArchitecture", "spigot-core", "0.5")
-}
+```shell
+mvn -P=errorprone test package checkstyle:checkstyle pmd:check
 ```
 
-### Documentation
+The individual structure extension artifacts are written beneath `structures/StructuresOutput`.
 
-The javadocs for this project can be found [here](https://pimvanderloos.github.io/AnimatedArchitecture/javadoc/).
+## Developer compatibility
+
+RCDoors retains the upstream Java packages and public API types under `nl.pim16aap2.animatedarchitecture`. Plugins
+compiled against the AnimatedArchitecture API should not rename imports merely because the installed plugin is branded
+RCDoors. Runtime consumers should account for the RCDoors plugin name while retaining compatibility with the legacy
+name where appropriate.
+
+For the original API documentation and project history, refer to the
+[AnimatedArchitecture repository](https://github.com/PimvanderLoos/AnimatedArchitecture) and its
+[published Javadocs](https://pimvanderloos.github.io/AnimatedArchitecture/javadoc/).
+
+## License and attribution
+
+RCDoors is distributed under the GNU General Public License, version 3. The upstream `LICENSE` file is retained in this
+repository. AnimatedArchitecture and its contributors remain credited as the authors of the upstream work; RepubliCraft
+maintains the modifications described in [FORK_NOTICE.md](FORK_NOTICE.md).

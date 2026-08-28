@@ -6,6 +6,18 @@
         <format>jar</format>
     </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
+    <files>
+        <file>
+            <source>${project.basedir}/../../LICENSE</source>
+            <outputDirectory>META-INF</outputDirectory>
+            <destName>RCDoors-GPL-3.0.txt</destName>
+        </file>
+        <file>
+            <source>${project.basedir}/../../FORK_NOTICE.md</source>
+            <outputDirectory>META-INF</outputDirectory>
+            <destName>RCDoors-FORK-NOTICE.md</destName>
+        </file>
+    </files>
     <dependencySets>
         <dependencySet>
             <outputDirectory>/</outputDirectory>

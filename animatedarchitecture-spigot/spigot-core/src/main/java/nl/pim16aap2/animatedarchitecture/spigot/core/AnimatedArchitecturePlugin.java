@@ -8,7 +8,6 @@ import nl.pim16aap2.animatedarchitecture.core.api.IAnimatedArchitecturePlatformP
 import nl.pim16aap2.animatedarchitecture.core.api.IConfig;
 import nl.pim16aap2.animatedarchitecture.core.api.debugging.DebuggableRegistry;
 import nl.pim16aap2.animatedarchitecture.core.api.restartable.RestartableHolder;
-import nl.pim16aap2.animatedarchitecture.core.util.updater.UpdateChecker;
 import nl.pim16aap2.animatedarchitecture.spigot.core.config.ConfigSpigot;
 import nl.pim16aap2.animatedarchitecture.spigot.core.implementations.DebugReporterSpigot;
 import nl.pim16aap2.animatedarchitecture.spigot.core.implementations.TextFactorySpigot;
@@ -16,13 +15,13 @@ import nl.pim16aap2.animatedarchitecture.spigot.core.listeners.BackupCommandList
 import nl.pim16aap2.animatedarchitecture.spigot.core.listeners.LoginMessageListener;
 import nl.pim16aap2.util.logging.Log4J2Configurator;
 import nl.pim16aap2.util.logging.floggerbackend.CustomLog4j2BackendFactory;
-import org.bstats.bukkit.Metrics;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 import org.semver4j.Semver;
 
 import javax.inject.Singleton;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Optional;
@@ -74,27 +73,46 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
     @Getter
     private @Nullable String initErrorMessage = null;
 
-    private final UpdateChecker updateChecker;
-
     public AnimatedArchitecturePlugin()
     {
+        importLegacyData();
         Log4J2Configurator.getInstance().setLogPath(getDataFolder().toPath());
 
         mainThreadId = Thread.currentThread().threadId();
         restartableHolder = new RestartableHolder();
 
         final Semver projectVersion = new Semver(getDescription().getVersion());
-        this.updateChecker = new UpdateChecker(projectVersion);
-
         animatedArchitectureSpigotComponent = DaggerAnimatedArchitectureSpigotComponent
             .builder()
             .setPlugin(this)
             .setProjectVersion(projectVersion)
-            .setUpdateChecker(this.updateChecker)
             .setRestartableHolder(restartableHolder)
             .build();
 
         updateLogger();
+    }
+
+    private void importLegacyData()
+    {
+        final Path targetDirectory = getDataFolder().toPath();
+        try
+        {
+            final LegacyDataImporter.ImportResult result = LegacyDataImporter.importFromSibling(targetDirectory);
+            switch (result)
+            {
+                case IMPORTED ->
+                    log.atInfo().log("Imported missing legacy AnimatedArchitecture data into %s.", targetDirectory);
+                case LEGACY_DIRECTORY_NOT_FOUND ->
+                    log.atFine().log("No legacy AnimatedArchitecture data directory was found.");
+                case ALREADY_IMPORTED ->
+                    log.atFine().log("Legacy AnimatedArchitecture data import was already completed.");
+            }
+        }
+        catch (IOException exception)
+        {
+            log.atSevere().withCause(exception).log("Failed to import legacy AnimatedArchitecture data!");
+            throw new IllegalStateException("Failed to import legacy AnimatedArchitecture data", exception);
+        }
     }
 
     /**
@@ -147,7 +165,7 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
     @Override
     public void onEnable()
     {
-        log.atInfo().log("Enabling AnimatedArchitecture %s...", getDescription().getVersion());
+        log.atInfo().log("Enabling RCDoors %s...", getDescription().getVersion());
 
         // onEnable may be called more than once during the lifetime of the plugin.
         // As such, we make sure to initialize the platform just once and then
@@ -157,21 +175,20 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
         if (!initialized)
         {
             firstInit = true;
-            initStats();
             try
             {
                 animatedArchitectureSpigotPlatform = initPlatform();
             }
             catch (Exception e)
             {
-                log.atSevere().withCause(e).log("Failed to initialize AnimatedArchitecture's Spigot platform!");
+                log.atSevere().withCause(e).log("Failed to initialize RCDoors' Spigot platform!");
             }
         }
         initialized = true;
 
         if (animatedArchitectureSpigotPlatform == null)
         {
-            log.atSevere().log("Failed to enable AnimatedArchitecture: Platform could not be initialized!");
+            log.atSevere().log("Failed to enable RCDoors: Platform could not be initialized!");
             return;
         }
 
@@ -184,24 +201,6 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
 
         if (firstInit)
             initCommands(animatedArchitectureSpigotPlatform);
-
-        scheduleUpdateChecker(firstInit);
-    }
-
-    private void scheduleUpdateChecker(boolean firstInit)
-    {
-        try
-        {
-            final long period = 864_000L; // 12 hours
-            // The update checker already runs before the first init, so we do not
-            // need to check again so soon.
-            final long delay = firstInit ? 0 : period;
-            Bukkit.getScheduler().runTaskTimerAsynchronously(this, this.updateChecker::checkForUpdates, delay, period);
-        }
-        catch (Exception e)
-        {
-            log.atSevere().withCause(e).log("Failed to schedule update checker!");
-        }
     }
 
     private void initCommands(AnimatedArchitectureSpigotPlatform animatedArchitectureSpigotPlatform)
@@ -220,20 +219,8 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
     @Override
     public void onDisable()
     {
-        log.atInfo().log("Disabling AnimatedArchitecture %s...", getDescription().getVersion());
+        log.atInfo().log("Disabling RCDoors %s...", getDescription().getVersion());
         restartableHolder.shutDown();
-    }
-
-    private void initStats()
-    {
-        try
-        {
-            new Metrics(this, 18_011);
-        }
-        catch (Exception e)
-        {
-            log.atSevere().withCause(e).log("Failed to enable stats! :(");
-        }
     }
 
     public ClassLoader getPluginClassLoader()
@@ -248,13 +235,13 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
         {
             final var platform = new AnimatedArchitectureSpigotPlatform(animatedArchitectureSpigotComponent);
             successfulInit = true;
-            log.atInfo().log("Successfully enabled AnimatedArchitecture %s", getDescription().getVersion());
+            log.atInfo().log("Successfully enabled RCDoors %s", getDescription().getVersion());
             optionalPlatform = Optional.of(platform);
             return platform;
         }
         catch (Exception e)
         {
-            log.atSevere().withCause(e).log("Failed to initialize AnimatedArchitecture's Spigot platform!");
+            log.atSevere().withCause(e).log("Failed to initialize RCDoors' Spigot platform!");
             initErrorMessage = e.getMessage();
             onInitFailure();
             return null;
@@ -278,7 +265,7 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
      */
     private void registerFailureLoginListener()
     {
-        new LoginMessageListener(this, new TextFactorySpigot(), null, null);
+        new LoginMessageListener(this, new TextFactorySpigot(), null);
     }
 
     @Override

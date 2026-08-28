@@ -4,25 +4,25 @@
 
     <artifactId>spigot-v1_21</artifactId>
     <packaging>jar</packaging>
-    <description>AnimatedArchitecture implementation for Spigot 1.21</description>
+    <description>RCDoors implementation for Spigot 1.21.4</description>
 
     <parent>
         <artifactId>animatedarchitecture-spigot</artifactId>
         <groupId>nl.pim16aap2.animatedarchitecture</groupId>
-        <version>0.7.2</version>
+        <version>1.0.0</version>
     </parent>
 
     <properties>
         <project.root-dir>${project.basedir}/../..</project.root-dir>
 
-        <dependency.spigot.version>1.21-R0.1-SNAPSHOT</dependency.spigot.version>
+        <dependency.spigot.version>1.21.4-R0.1-SNAPSHOT</dependency.spigot.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>nl.pim16aap2.animatedarchitecture</groupId>
             <artifactId>spigot-util</artifactId>
-            <version>0.7.2</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>

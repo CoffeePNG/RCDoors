@@ -5,9 +5,6 @@ import nl.pim16aap2.animatedarchitecture.core.api.restartable.RestartableHolder;
 import nl.pim16aap2.animatedarchitecture.core.text.Text;
 import nl.pim16aap2.animatedarchitecture.core.text.TextType;
 import nl.pim16aap2.animatedarchitecture.core.util.Constants;
-import nl.pim16aap2.animatedarchitecture.core.util.updater.UpdateCheckResult;
-import nl.pim16aap2.animatedarchitecture.core.util.updater.UpdateChecker;
-import nl.pim16aap2.animatedarchitecture.core.util.updater.UpdateInformation;
 import nl.pim16aap2.animatedarchitecture.spigot.core.AnimatedArchitecturePlugin;
 import nl.pim16aap2.animatedarchitecture.spigot.util.text.TextRendererSpigot;
 import org.bukkit.Bukkit;
@@ -18,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Objects;
 
 /**
  * Represents a listener that keeps track of {@link Player}s logging in to send them any messages if needed.
@@ -28,20 +24,17 @@ public final class LoginMessageListener extends AbstractListener
 {
     private final AnimatedArchitecturePlugin plugin;
     private final ITextFactory textFactory;
-    private final @Nullable UpdateChecker updateChecker;
 
     @Inject
     public LoginMessageListener(
         AnimatedArchitecturePlugin javaPlugin,
         ITextFactory textFactory,
-        @Nullable UpdateChecker updateChecker,
         @Nullable RestartableHolder restartableHolder)
     {
         super(restartableHolder, javaPlugin);
 
         this.plugin = javaPlugin;
         this.textFactory = textFactory;
-        this.updateChecker = updateChecker;
 
         if (restartableHolder == null)
             register();
@@ -67,12 +60,11 @@ public final class LoginMessageListener extends AbstractListener
         final Text text = textFactory.newText();
 
         addErrorMessage(text);
-        addUpdateMessage(text);
 
         if (text.isEmpty())
             return;
 
-        final Text header = textFactory.newText().append("[AnimatedArchitecture]", TextType.SUCCESS);
+        final Text header = textFactory.newText().append("[RCDoors]", TextType.SUCCESS);
         player.spigot().sendMessage(header.append(text).render(new TextRendererSpigot()));
     }
 
@@ -83,23 +75,5 @@ public final class LoginMessageListener extends AbstractListener
             return;
         text.append("\nERROR: ", TextType.ERROR)
             .append(msg, TextType.INFO);
-    }
-
-    private void addUpdateMessage(Text text)
-    {
-        if (updateChecker == null)
-            return;
-
-        final @Nullable UpdateInformation info = updateChecker.getUpdateInformation();
-        if (info == null)
-            return;
-
-        if (info.updateCheckResult().isError())
-            text.append("\nERROR: ", TextType.ERROR)
-                .append("Failed to check for updates!", TextType.INFO);
-        if (info.updateCheckResult() == UpdateCheckResult.UPDATE_AVAILABLE)
-            text.append("\nUpdate available: '", TextType.SUCCESS)
-                .append(Objects.toString(info.updateName()), TextType.HIGHLIGHT)
-                .append("'!", TextType.SUCCESS);
     }
 }

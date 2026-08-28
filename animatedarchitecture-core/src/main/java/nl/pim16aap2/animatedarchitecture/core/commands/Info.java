@@ -175,7 +175,7 @@ public class Info extends StructureTargetCommand
         final var openStatusArgument = text.getTextArgumentFactory().clickable(
             localizedOpenStatus,
             String.format(
-                "/animatedarchitecture setopenstatus %s %d true",
+                "/rcdoors setopenstatus %s %d true",
                 oppositeLocalizedOpenStatus,
                 structure.getUid())
         );
@@ -189,7 +189,7 @@ public class Info extends StructureTargetCommand
         final var argument = text.getTextArgumentFactory().clickable(
             localizer.getMessage(structure.getOpenDirection().getLocalizationKey()),
             String.format(
-                "/animatedarchitecture setopendirection %s %d true",
+                "/rcdoors setopendirection %s %d true",
                 localizer.getMessage(structure.getCycledOpenDirection().getLocalizationKey()),
                 structure.getUid())
         );
@@ -205,7 +205,7 @@ public class Info extends StructureTargetCommand
         final var argument = text.getTextArgumentFactory().clickable(
             localizer.getMessage(localizationKey),
             String.format(
-                "/animatedarchitecture lock %s %d true",
+                "/rcdoors lock %s %d true",
                 !structure.isLocked(),
                 structure.getUid())
         );

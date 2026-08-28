@@ -5,8 +5,8 @@
     <groupId>nl.pim16aap2.animatedarchitecture</groupId>
     <artifactId>animatedarchitecture-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.7.2</version>
-    <name>animatedarchitecture</name>
+    <version>1.0.0</version>
+    <name>RCDoors</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -455,10 +455,6 @@
                             <relocation>
                                 <pattern>org.apiguardian</pattern>
                                 <shadedPattern>nl.pim16aap2.animatedarchitecture.lib.apiguardian</shadedPattern>
-                            </relocation>
-                            <relocation>
-                                <pattern>org.bstats</pattern>
-                                <shadedPattern>nl.pim16aap2.animatedarchitecture.lib.bstats</shadedPattern>
                             </relocation>
                             <relocation>
                                 <pattern>org.checkerframework</pattern>
