@@ -13,11 +13,11 @@ to migrate existing installations safely.
 
 ## Supported environment
 
-- Paper 1.21.4
-- Java 21 or newer
+- Paper 26.2
+- Java 25 or newer
 - Vault
 
-RCDoors is built and tested for Paper 1.21.4. Other server versions or implementations are outside this fork's support
+RCDoors is built and tested for Paper 26.2. Other server versions or implementations are outside this fork's support
 target.
 
 ## Structure types
@@ -74,7 +74,7 @@ to opening directions.
 
 Build requirements:
 
-- JDK 21+
+- JDK 25+
 - Maven
 
 From the repository root, create the production package with:

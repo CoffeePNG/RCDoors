@@ -16,12 +16,13 @@
         <project.root-dir>${project.basedir}/..</project.root-dir>
 
         <dependency.paperlib.version>1.0.8</dependency.paperlib.version>
-        <dependency.spigot-base.version>1.21.4-R0.1-SNAPSHOT</dependency.spigot-base.version>
+        <dependency.spigot-base.version>26.2-R0.1-SNAPSHOT</dependency.spigot-base.version>
     </properties>
 
     <modules>
         <module>spigot-v1_20</module>
         <module>spigot-v1_21</module>
+        <module>spigot-v26_2</module>
         <module>spigot-core</module>
         <module>spigot-util</module>
         <module>protection-hooks</module>

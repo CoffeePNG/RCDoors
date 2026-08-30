@@ -192,18 +192,18 @@ public class EventListeners extends AbstractListener
             if (clickedInventory == null)
                 return;
 
-            if (event.getAction().equals(InventoryAction.MOVE_TO_OTHER_INVENTORY) ||
-                !clickedInventory.getType().equals(InventoryType.PLAYER))
+            if (!event.getAction().equals(InventoryAction.MOVE_TO_OTHER_INVENTORY) &&
+                clickedInventory.getType().equals(InventoryType.PLAYER))
+                return;
+
+            if (event.getWhoClicked() instanceof Player player)
             {
-                if (event.getWhoClicked() instanceof Player player)
-                {
-                    if (isToolUser(player))
-                        event.setCancelled(true);
-                    else
-                        event.getInventory().removeItem(currentItem);
-                }
-                event.setCancelled(true);
+                if (isToolUser(player))
+                    event.setCancelled(true);
+                else
+                    event.getInventory().removeItem(currentItem);
             }
+            event.setCancelled(true);
         }
         catch (Exception e)
         {

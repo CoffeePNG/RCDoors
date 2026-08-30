@@ -4,8 +4,8 @@ version: ${project.version}
 author: pim16aap2
 contributors:
   - RepubliCraft
-description: RepubliCraft's RCDoors fork of AnimatedArchitecture for Paper 1.21.4.
-api-version: 1.21
+description: RepubliCraft's RCDoors fork of AnimatedArchitecture for Paper 26.2.
+api-version: 26.2
 provides:
   - AnimatedArchitecture
 depend:
