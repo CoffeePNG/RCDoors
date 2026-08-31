@@ -473,6 +473,18 @@
                                 <shadedPattern>nl.pim16aap2.animatedarchitecture.lib.jakarta.inject</shadedPattern>
                             </relocation>
                         </relocations>
+                        <filters>
+                            <filter>
+                                <artifact>*:*</artifact>
+                                <excludes>
+                                    <exclude>META-INF/*.SF</exclude>
+                                    <exclude>META-INF/*.DSA</exclude>
+                                    <exclude>META-INF/*.RSA</exclude>
+                                    <exclude>META-INF/versions/*/module-info.class</exclude>
+                                    <exclude>module-info.class</exclude>
+                                </excludes>
+                            </filter>
+                        </filters>
                     </configuration>
                     <executions>
                         <execution>
