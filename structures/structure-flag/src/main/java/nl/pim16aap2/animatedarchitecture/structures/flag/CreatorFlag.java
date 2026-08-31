@@ -62,6 +62,7 @@ public class CreatorFlag extends Creator
                     TextType.INFO,
                     getStructureArg()))
                 .construct(),
+            factorySelectBlocks.construct(),
             factoryProvideRotationPointPos
                 .textSupplier(text -> text.append(
                     localizer.getMessage("creator.flag.step_3"),

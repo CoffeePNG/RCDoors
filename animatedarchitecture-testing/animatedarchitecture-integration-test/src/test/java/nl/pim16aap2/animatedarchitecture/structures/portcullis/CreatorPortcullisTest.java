@@ -1,5 +1,6 @@
 package nl.pim16aap2.animatedarchitecture.structures.portcullis;
 
+import nl.pim16aap2.animatedarchitecture.core.tooluser.BlockSelectionAction;
 import nl.pim16aap2.animatedarchitecture.core.UnitTestUtil;
 import nl.pim16aap2.animatedarchitecture.core.structures.Structure;
 import nl.pim16aap2.animatedarchitecture.core.structures.StructureType;
@@ -49,6 +50,7 @@ class CreatorPortcullisTest extends CreatorTestsUtil
             structureName,
             min.toLocation(locationFactory, world),
             max.toLocation(locationFactory, world),
+            BlockSelectionAction.DONE,
             powerblock.toLocation(locationFactory, world),
             isOpen,
             openDirection,

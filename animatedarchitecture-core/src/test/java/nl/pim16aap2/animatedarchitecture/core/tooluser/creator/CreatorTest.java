@@ -4,6 +4,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import nl.pim16aap2.animatedarchitecture.core.UnitTestUtil;
 import nl.pim16aap2.animatedarchitecture.core.animation.StructureActivityManager;
+import nl.pim16aap2.animatedarchitecture.core.api.HighlightedBlockSpawner;
 import nl.pim16aap2.animatedarchitecture.core.api.IAnimatedArchitectureToolUtil;
 import nl.pim16aap2.animatedarchitecture.core.api.IEconomyManager;
 import nl.pim16aap2.animatedarchitecture.core.api.ILocation;
@@ -120,7 +121,9 @@ public class CreatorTest
             structureAnimationRequestBuilder,
             Mockito.mock(StructureActivityManager.class),
             commandFactory,
-            assistedStepFactory
+            assistedStepFactory,
+            Mockito.mock(HighlightedBlockSpawner.class),
+            UnitTestUtil.newMainThreadExecutor()
         );
     }
 

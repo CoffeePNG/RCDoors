@@ -57,6 +57,27 @@ public interface ITextComponentFactory
     }
 
     /**
+     * Creates a new {@link TextComponent} and attempts to add any required {@link ITextDecorator}s to put a command in
+     * the player's chat box (without running it) when the text is clicked.
+     * <p>
+     * This is used for commands that the player still has to complete themselves, such as the command that sets the
+     * name of a new structure. It saves them from having to type the command out.
+     *
+     * @param type
+     *     The type of the text.
+     * @param command
+     *     The command to suggest when this text is clicked.
+     * @param info
+     *     The optional information String explaining what clicking the text will do.
+     * @return A new component or null to apply no specific decoration to this component.
+     */
+    default @Nullable TextComponent newSuggestedCommandTextComponent(
+        @Nullable TextType type, String command, @Nullable String info)
+    {
+        return newClickableTextComponent(type, command, info);
+    }
+
+    /**
      * Simple implementation of the factory interface that only creates basic components.
      */
     final class SimpleTextComponentFactory implements ITextComponentFactory

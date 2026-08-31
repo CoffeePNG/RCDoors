@@ -50,6 +50,7 @@ public class CreatorBigDoor extends Creator
                     TextType.INFO,
                     getStructureArg()))
                 .construct(),
+            factorySelectBlocks.construct(),
             factoryProvideRotationPointPos
                 .textSupplier(text -> text.append(
                     localizer.getMessage("creator.big_door.step_3"),

@@ -50,6 +50,7 @@ public class CreatorWindMill extends Creator
                     TextType.INFO,
                     getStructureArg()))
                 .construct(),
+            factorySelectBlocks.construct(),
             factoryProvideRotationPointPos
                 .textSupplier(text -> text.append(
                     localizer.getMessage("creator.windmill.step_3"),

@@ -2,6 +2,8 @@ package nl.pim16aap2.animatedarchitecture.core.tooluser;
 
 import nl.altindag.log.LogCaptor;
 import nl.pim16aap2.animatedarchitecture.core.animation.StructureActivityManager;
+import nl.pim16aap2.animatedarchitecture.core.UnitTestUtil;
+import nl.pim16aap2.animatedarchitecture.core.api.HighlightedBlockSpawner;
 import nl.pim16aap2.animatedarchitecture.core.api.IAnimatedArchitectureToolUtil;
 import nl.pim16aap2.animatedarchitecture.core.api.IEconomyManager;
 import nl.pim16aap2.animatedarchitecture.core.api.IPlayer;
@@ -88,7 +90,9 @@ public class ToolUserTest
             Mockito.mock(StructureAnimationRequestBuilder.class),
             Mockito.mock(StructureActivityManager.class),
             Mockito.mock(CommandFactory.class),
-            stepFactory
+            stepFactory,
+            Mockito.mock(HighlightedBlockSpawner.class),
+            UnitTestUtil.newMainThreadExecutor()
         );
     }
 

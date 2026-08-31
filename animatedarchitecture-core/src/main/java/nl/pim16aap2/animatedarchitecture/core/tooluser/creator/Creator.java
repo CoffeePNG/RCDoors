@@ -6,7 +6,11 @@ import lombok.ToString;
 import lombok.extern.flogger.Flogger;
 import nl.pim16aap2.animatedarchitecture.core.animation.AnimationType;
 import nl.pim16aap2.animatedarchitecture.core.animation.StructureActivityManager;
+import nl.pim16aap2.animatedarchitecture.core.api.Color;
+import nl.pim16aap2.animatedarchitecture.core.api.HighlightedBlockSpawner;
 import nl.pim16aap2.animatedarchitecture.core.api.IEconomyManager;
+import nl.pim16aap2.animatedarchitecture.core.api.IExecutor;
+import nl.pim16aap2.animatedarchitecture.core.api.IHighlightedBlock;
 import nl.pim16aap2.animatedarchitecture.core.api.ILocation;
 import nl.pim16aap2.animatedarchitecture.core.api.IPlayer;
 import nl.pim16aap2.animatedarchitecture.core.api.IWorld;
@@ -29,15 +33,20 @@ import nl.pim16aap2.animatedarchitecture.core.text.Text;
 import nl.pim16aap2.animatedarchitecture.core.text.TextArgument;
 import nl.pim16aap2.animatedarchitecture.core.text.TextArgumentFactory;
 import nl.pim16aap2.animatedarchitecture.core.text.TextType;
+import nl.pim16aap2.animatedarchitecture.core.tooluser.BlockSelectionAction;
 import nl.pim16aap2.animatedarchitecture.core.tooluser.Procedure;
 import nl.pim16aap2.animatedarchitecture.core.tooluser.Step;
+import nl.pim16aap2.animatedarchitecture.core.tooluser.ToolClick;
 import nl.pim16aap2.animatedarchitecture.core.tooluser.ToolUser;
 import nl.pim16aap2.animatedarchitecture.core.tooluser.stepexecutor.AsyncStepExecutor;
+import nl.pim16aap2.animatedarchitecture.core.tooluser.stepexecutor.StepExecutorBlockSelection;
 import nl.pim16aap2.animatedarchitecture.core.tooluser.stepexecutor.StepExecutorBoolean;
 import nl.pim16aap2.animatedarchitecture.core.tooluser.stepexecutor.StepExecutorLocation;
 import nl.pim16aap2.animatedarchitecture.core.tooluser.stepexecutor.StepExecutorOpenDirection;
 import nl.pim16aap2.animatedarchitecture.core.tooluser.stepexecutor.StepExecutorString;
 import nl.pim16aap2.animatedarchitecture.core.tooluser.stepexecutor.StepExecutorVoid;
+import nl.pim16aap2.animatedarchitecture.core.util.BlockSelection;
+import nl.pim16aap2.animatedarchitecture.core.util.BlockSelectionBuilder;
 import nl.pim16aap2.animatedarchitecture.core.util.Cuboid;
 import nl.pim16aap2.animatedarchitecture.core.util.FutureUtil;
 import nl.pim16aap2.animatedarchitecture.core.util.Limit;
@@ -47,6 +56,9 @@ import nl.pim16aap2.animatedarchitecture.core.util.Util;
 import nl.pim16aap2.animatedarchitecture.core.util.vector.Vector3Di;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -74,6 +86,18 @@ public abstract class Creator extends ToolUser
     private final @Nullable StructureAnimationRequestBuilder structureAnimationRequestBuilder;
 
     private final StructureActivityManager structureActivityManager;
+
+    private final HighlightedBlockSpawner highlightedBlockSpawner;
+
+    private final IExecutor executor;
+
+    /**
+     * The maximum number of blocks that are highlighted at the same time during the block selection step.
+     * <p>
+     * Every highlighted block is an entity, so highlighting a large selection would cost more than the feedback is
+     * worth. Blocks beyond this limit are still selected; they are simply not highlighted.
+     */
+    private static final int MAX_HIGHLIGHTED_BLOCKS = 250;
 
     protected final StructureID structureID = StructureID.getUnregisteredID();
 
@@ -107,6 +131,21 @@ public abstract class Creator extends ToolUser
     @ToString.Include
     @GuardedBy("this")
     private @Nullable Vector3Di firstPos;
+
+    /**
+     * The blocks the user selected individually with the wand.
+     * <p>
+     * When the user does not select any blocks, the structure simply consists of every block in {@link #cuboid}, which
+     * is how structures worked before the wand existed.
+     */
+    @GuardedBy("this")
+    private final BlockSelectionBuilder blockSelection = new BlockSelectionBuilder();
+
+    /**
+     * The highlighted blocks that show the user which blocks they have selected so far.
+     */
+    @GuardedBy("this")
+    private final Map<Vector3Di, IHighlightedBlock> selectionHighlights = new HashMap<>();
 
     /**
      * The powerblock selected by the user.
@@ -171,6 +210,11 @@ public abstract class Creator extends ToolUser
     protected final Step.Factory factoryProvideRotationPointPos;
 
     /**
+     * Factory for the {@link Step} in which the user selects the individual blocks of the structure with the wand.
+     */
+    protected final Step.Factory factorySelectBlocks;
+
+    /**
      * Factory for the {@link Step} that provides the position of the structure's power block.
      */
     protected final Step.Factory factoryProvidePowerBlockPos;
@@ -219,6 +263,8 @@ public abstract class Creator extends ToolUser
 
         this.structureAnimationRequestBuilder = context.getStructureAnimationRequestBuilder();
         this.structureActivityManager = context.getStructureActivityManager();
+        this.highlightedBlockSpawner = context.getHighlightedBlockSpawner();
+        this.executor = context.getExecutor();
         this.limitsManager = context.getLimitsManager();
         this.structureBuilder = context.getStructureBuilder();
         this.databaseManager = context.getDatabaseManager();
@@ -241,7 +287,14 @@ public abstract class Creator extends ToolUser
             .propertyValueSupplier(this::getName)
             .updatable(true)
             .textSupplier(text -> text.append(
-                localizer.getMessage("creator.base.give_name"), TextType.SUCCESS, getStructureArg()));
+                localizer.getMessage("creator.base.give_name"),
+                TextType.SUCCESS,
+                getStructureArg(),
+                // Clicking the command puts it in the player's chat box, so they only have to type the name itself.
+                arg -> arg.suggestCommand(
+                    localizer.getMessage("creator.base.give_name.command"),
+                    "/rcdoors setname ",
+                    localizer.getMessage("creator.base.give_name.hint"))));
 
         factoryProvideFirstPos = stepFactory
             .stepName("SET_FIRST_POS")
@@ -264,6 +317,16 @@ public abstract class Creator extends ToolUser
             .propertyValueSupplier(() -> formatVector(getRequiredProperty(Property.ROTATION_POINT)))
             .updatable(true)
             .stepExecutor(new StepExecutorLocation(this::completeSetRotationPointStep));
+
+        factorySelectBlocks = stepFactory
+            .stepName("SELECT_BLOCKS")
+            // Clicks on blocks return false, so only the 'done' action moves the process to the next step.
+            .stepExecutor(new StepExecutorBlockSelection(
+                this::handleBlockSelectionClick,
+                this::handleBlockSelectionAction))
+            .propertyName(localizer.getMessage("creator.base.property.selected_blocks"))
+            .propertyValueSupplier(this::describeBlockSelection)
+            .textSupplier(this::selectBlocksTextSupplier);
 
         factoryProvidePowerBlockPos = stepFactory
             .stepName("SET_POWER_BLOCK_POS")
@@ -505,6 +568,13 @@ public abstract class Creator extends ToolUser
         this.processIsUpdatable = true;
     }
 
+    @Override
+    public void abort()
+    {
+        clearSelectionHighlights();
+        super.abort();
+    }
+
     /**
      * Completes the creation process. It'll construct and insert the structure and complete the {@link ToolUser}
      * process.
@@ -517,6 +587,7 @@ public abstract class Creator extends ToolUser
     protected synchronized boolean completeCreationProcess()
     {
         removeTool();
+        clearSelectionHighlights();
         if (super.isActive())
             insertStructure(constructStructure());
         structureActivityManager.stopAnimators(this.structureID.getId());
@@ -669,6 +740,280 @@ public abstract class Creator extends ToolUser
                 }
                 return true;
             });
+    }
+
+    /**
+     * The instructions for the block selection step.
+     * <p>
+     * Besides explaining both mouse buttons, this lists the actions the player can click instead of having to type a
+     * command for them.
+     */
+    protected Text selectBlocksTextSupplier(Text text)
+    {
+        return text
+            .append(
+                localizer.getMessage("creator.base.select_blocks"),
+                TextType.INFO,
+                arg -> arg.highlight(localizer.getStructureType(getStructureType())))
+            .append("\n")
+            .append(
+                localizer.getMessage("creator.base.select_blocks.actions"),
+                TextType.INFO,
+                arg -> selectionActionArgument(arg, BlockSelectionAction.DONE),
+                arg -> selectionActionArgument(arg, BlockSelectionAction.FILL),
+                arg -> selectionActionArgument(arg, BlockSelectionAction.UNDO),
+                arg -> selectionActionArgument(arg, BlockSelectionAction.CLEAR));
+    }
+
+    private TextArgument selectionActionArgument(TextArgumentFactory arg, BlockSelectionAction action)
+    {
+        final String key = "creator.base.select_blocks.action." + action.getCommandName();
+        return arg.clickable(
+            localizer.getMessage(key),
+            "/rcdoors selectblocks " + action.getCommandName(),
+            localizer.getMessage(key + ".hint"));
+    }
+
+    /**
+     * Describes the current selection for the review step, e.g. "42 blocks".
+     */
+    private synchronized String describeBlockSelection()
+    {
+        if (blockSelection.isEmpty())
+            return localizer.getMessage("creator.base.property.selected_blocks.whole_region");
+        return String.valueOf(blockSelection.size());
+    }
+
+    /**
+     * Handles a single click with the wand during the block selection step.
+     * <p>
+     * Left-clicking a block adds it to the selection, right-clicking it removes it again. The step is never completed
+     * by a click: the player decides when they are done. See {@link #handleBlockSelectionAction(BlockSelectionAction)}.
+     *
+     * @param toolClick
+     *     The click to handle.
+     * @return False, as a click never completes this step.
+     */
+    protected CompletableFuture<Boolean> handleBlockSelectionClick(ToolClick toolClick)
+    {
+        final ILocation loc = toolClick.location();
+
+        if (!verifyWorldMatch(loc.getWorld()))
+            return CompletableFuture.completedFuture(false);
+
+        final Vector3Di position = loc.getPosition();
+        final @Nullable Cuboid currentCuboid = getCuboid();
+
+        if (currentCuboid == null || !currentCuboid.isPosInsideCuboid(position))
+        {
+            getPlayer().sendMessage(textFactory.newText().append(
+                localizer.getMessage("creator.base.error.block_outside_region"),
+                TextType.ERROR)
+            );
+            return CompletableFuture.completedFuture(false);
+        }
+
+        if (toolClick.isLeftClick())
+            selectBlock(position);
+        else
+            deselectBlock(position);
+
+        sendSelectionStatus();
+        return CompletableFuture.completedFuture(false);
+    }
+
+    /**
+     * Handles one of the actions the player can click during the block selection step.
+     *
+     * @param action
+     *     The action to handle.
+     * @return True if the action was handled successfully.
+     */
+    protected CompletableFuture<Boolean> handleBlockSelectionAction(BlockSelectionAction action)
+    {
+        switch (action)
+        {
+            case FILL ->
+            {
+                fillSelection();
+                sendSelectionStatus();
+            }
+            case UNDO ->
+            {
+                undoSelection();
+                sendSelectionStatus();
+            }
+            case CLEAR ->
+            {
+                clearSelection();
+                sendSelectionStatus();
+            }
+            case DONE ->
+            {
+                return CompletableFuture.completedFuture(completeBlockSelectionStep());
+            }
+        }
+        return CompletableFuture.completedFuture(false);
+    }
+
+    /**
+     * Applies an action of the block selection step.
+     * <p>
+     * This is the entry point used by the {@code selectblocks} command: it takes the input lock and, when the player is
+     * done selecting, advances the procedure to the next step.
+     *
+     * @param action
+     *     The action to apply.
+     * @return A future that completes once the action has been handled.
+     */
+    public final CompletableFuture<Boolean> applyBlockSelectionAction(BlockSelectionAction action)
+    {
+        return handleInput(action);
+    }
+
+    /**
+     * Finishes the block selection step.
+     * <p>
+     * An empty selection means the structure consists of every block in its cuboid, which is also the case for a
+     * selection that happens to contain every block of the cuboid. In both cases no mask is stored, so these structures
+     * behave exactly like structures created before the wand existed.
+     *
+     * @return True if the step was completed.
+     */
+    private synchronized boolean completeBlockSelectionStep()
+    {
+        if (!blockSelection.isEmpty())
+        {
+            final BlockSelection selection = blockSelection.build();
+            setProperty(Property.BLOCK_MASK, BlockSelection.isFullCuboid(selection) ? null : selection);
+        }
+        clearSelectionHighlights();
+        return true;
+    }
+
+    private synchronized void selectBlock(Vector3Di position)
+    {
+        if (!blockSelection.add(position))
+            return;
+        highlightBlock(position);
+    }
+
+    private synchronized void deselectBlock(Vector3Di position)
+    {
+        if (!blockSelection.remove(position))
+            return;
+        removeHighlight(position);
+    }
+
+    private synchronized void fillSelection()
+    {
+        final @Nullable Cuboid currentCuboid = getCuboid();
+        if (currentCuboid == null)
+            return;
+
+        final Vector3Di min = currentCuboid.getMin();
+        final Vector3Di max = currentCuboid.getMax();
+
+        for (int x = min.x(); x <= max.x(); ++x)
+            for (int y = min.y(); y <= max.y(); ++y)
+                for (int z = min.z(); z <= max.z(); ++z)
+                {
+                    final Vector3Di position = new Vector3Di(x, y, z);
+                    if (blockSelection.add(position))
+                        highlightBlock(position);
+                }
+    }
+
+    private synchronized void undoSelection()
+    {
+        blockSelection
+            .undo()
+            .ifPresent(position ->
+            {
+                if (blockSelection.contains(position))
+                    highlightBlock(position);
+                else
+                    removeHighlight(position);
+            });
+    }
+
+    private synchronized void clearSelection()
+    {
+        blockSelection.clear();
+        clearSelectionHighlights();
+    }
+
+    /**
+     * Sends the player a short summary of their selection, so that they can see the effect of every click without
+     * having to count blocks themselves.
+     */
+    private synchronized void sendSelectionStatus()
+    {
+        getPlayer().sendMessage(textFactory.newText().append(
+            localizer.getMessage("creator.base.select_blocks.status"),
+            TextType.INFO,
+            arg -> arg.highlight(blockSelection.size()),
+            arg -> arg.highlight(
+                blockSelection
+                    .getBoundingCuboid()
+                    .map(Cuboid::getVolume)
+                    .orElseGet(() -> Optional.ofNullable(getCuboid()).map(Cuboid::getVolume).orElse(0))))
+        );
+    }
+
+    /**
+     * Highlights a selected block for the player, so that they can see their selection take shape while they are
+     * making it.
+     */
+    private synchronized void highlightBlock(Vector3Di position)
+    {
+        final @Nullable IWorld currentWorld = getWorld();
+        if (currentWorld == null ||
+            selectionHighlights.containsKey(position) ||
+            selectionHighlights.size() >= MAX_HIGHLIGHTED_BLOCKS)
+            return;
+
+        // Highlighted blocks are entities, so they can only be spawned on the main thread.
+        executor.runOnMainThread(() -> highlightedBlockSpawner
+            .builder()
+            .forPlayer(getPlayer())
+            .inWorld(currentWorld)
+            .atPosition(position.x() + 0.5, position.y(), position.z() + 0.5)
+            .withColor(Color.GREEN)
+            .spawn()
+            .ifPresent(highlightedBlock -> addHighlight(position, highlightedBlock)));
+    }
+
+    /**
+     * Registers a highlighted block that was spawned for the given position.
+     * <p>
+     * The block is killed right away when the position was deselected again while it was being spawned.
+     */
+    private synchronized void addHighlight(Vector3Di position, IHighlightedBlock highlightedBlock)
+    {
+        if (blockSelection.contains(position) && selectionHighlights.putIfAbsent(position, highlightedBlock) == null)
+            return;
+        highlightedBlock.kill();
+    }
+
+    private synchronized void removeHighlight(Vector3Di position)
+    {
+        final @Nullable IHighlightedBlock highlightedBlock = selectionHighlights.remove(position);
+        if (highlightedBlock != null)
+            executor.runOnMainThread(highlightedBlock::kill);
+    }
+
+    /**
+     * Removes every highlighted block that was spawned for the block selection step.
+     */
+    protected final synchronized void clearSelectionHighlights()
+    {
+        if (selectionHighlights.isEmpty())
+            return;
+
+        final List<IHighlightedBlock> highlightedBlocks = List.copyOf(selectionHighlights.values());
+        selectionHighlights.clear();
+        executor.runOnMainThread(() -> highlightedBlocks.forEach(IHighlightedBlock::kill));
     }
 
     /**

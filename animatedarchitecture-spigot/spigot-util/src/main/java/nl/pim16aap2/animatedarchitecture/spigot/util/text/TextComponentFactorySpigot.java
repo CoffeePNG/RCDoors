@@ -42,4 +42,13 @@ public final class TextComponentFactorySpigot implements ITextComponentFactory
             new ClickableTextDecorator(command, info),
             newColoredTextDecorator(type));
     }
+
+    @Override
+    public TextComponent newSuggestedCommandTextComponent(
+        @Nullable TextType type, String command, @Nullable String info)
+    {
+        return new TextComponent(
+            new SuggestedCommandTextDecorator(command, info),
+            newColoredTextDecorator(type));
+    }
 }

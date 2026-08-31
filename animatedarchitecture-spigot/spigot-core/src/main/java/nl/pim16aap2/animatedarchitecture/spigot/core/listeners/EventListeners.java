@@ -5,13 +5,13 @@ import nl.pim16aap2.animatedarchitecture.core.api.restartable.RestartableHolder;
 import nl.pim16aap2.animatedarchitecture.core.managers.DatabaseManager;
 import nl.pim16aap2.animatedarchitecture.core.managers.DelayedCommandInputManager;
 import nl.pim16aap2.animatedarchitecture.core.managers.ToolUserManager;
+import nl.pim16aap2.animatedarchitecture.core.tooluser.ToolClick;
 import nl.pim16aap2.animatedarchitecture.core.tooluser.ToolUser;
 import nl.pim16aap2.animatedarchitecture.core.util.FutureUtil;
 import nl.pim16aap2.animatedarchitecture.spigot.core.implementations.AnimatedArchitectureToolUtilSpigot;
 import nl.pim16aap2.animatedarchitecture.spigot.util.SpigotAdapter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -60,14 +60,24 @@ public class EventListeners extends AbstractListener
 
     /**
      * Listens to players interacting with the world to check if they are using a AnimatedArchitecture tool.
+     * <p>
+     * Both mouse buttons are forwarded: the block selection step uses the right mouse button to deselect blocks, while
+     * every other step only reacts to left-clicks.
      *
      * @param event
      *     The {@link PlayerInteractEvent}.
      */
     @EventHandler
-    public void onLeftClick(PlayerInteractEvent event)
+    public void onToolClick(PlayerInteractEvent event)
     {
-        if (event.getAction() != Action.LEFT_CLICK_BLOCK)
+        final ToolClick.Button button = switch (event.getAction())
+        {
+            case LEFT_CLICK_BLOCK -> ToolClick.Button.LEFT;
+            case RIGHT_CLICK_BLOCK -> ToolClick.Button.RIGHT;
+            default -> null;
+        };
+
+        if (button == null)
             return;
 
         if (event.getClickedBlock() == null)
@@ -81,7 +91,10 @@ public class EventListeners extends AbstractListener
             .ifPresent(toolUser ->
             {
                 event.setCancelled(true);
-                toolUser.handleInput(SpigotAdapter.wrapLocation(event.getClickedBlock().getLocation()));
+                toolUser.handleInput(new ToolClick(
+                    SpigotAdapter.wrapLocation(event.getClickedBlock().getLocation()),
+                    button
+                ));
             });
     }
 

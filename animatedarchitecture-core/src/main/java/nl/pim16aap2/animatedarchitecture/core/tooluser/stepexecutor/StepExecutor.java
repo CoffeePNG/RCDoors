@@ -87,7 +87,7 @@ public abstract class StepExecutor
      *
      * @return The {@link Class} of the input object.
      */
-    protected abstract Class<?> getInputClass();
+    public abstract Class<?> getInputClass();
 
     /**
      * Checks if this step is asynchronous.

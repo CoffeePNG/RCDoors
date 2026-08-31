@@ -24,6 +24,7 @@ public final class StructureTypeFlag extends StructureType
             TYPE_VERSION,
             List.of(),
             List.of(
+                Property.BLOCK_MASK,
                 Property.ROTATION_POINT
             ),
             "structure.type.flag"

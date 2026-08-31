@@ -189,6 +189,7 @@ public final class CommandManager
         initCmdPreview(manager, builder);
         initCmdVersion(manager, builder);
         initCmdUpdateCreator(manager, builder);
+        initCmdSelectBlocks(manager, builder);
 
         builder.build();
     }
@@ -540,6 +541,19 @@ public final class CommandManager
         manager.command(
             baseInit(builder, CommandDefinition.VERSION, "commands.version.description")
                 .handler(commandExecutor::version)
+        );
+    }
+
+    private void initCmdSelectBlocks(
+        BukkitCommandManager<ICommandSender> manager,
+        Command.Builder<ICommandSender> builder)
+    {
+        manager.command(
+            builder.literal(CommandDefinition.SELECT_BLOCKS.getName().replace("_", "").toLowerCase(Locale.ROOT))
+                .permission(CommandDefinition.SELECT_BLOCKS.getLowestPermission())
+                .argument(StringArgument.of("action"))
+                .hidden()
+                .handler(commandExecutor::selectBlocks)
         );
     }
 

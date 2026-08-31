@@ -90,6 +90,14 @@ class CommandExecutor
         commandFactory.newCancel(context.getSender()).run().exceptionally(FutureUtil::exceptionally);
     }
 
+    void selectBlocks(CommandContext<ICommandSender> context)
+    {
+        commandFactory
+            .newSelectBlocks(context.getSender(), context.get("action"))
+            .run()
+            .exceptionally(FutureUtil::exceptionally);
+    }
+
     void confirm(CommandContext<ICommandSender> context)
     {
         commandFactory.newConfirm(context.getSender()).run().exceptionally(FutureUtil::exceptionally);
