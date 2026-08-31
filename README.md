@@ -15,6 +15,7 @@ to migrate existing installations safely.
 
 - Paper 26.2
 - Java 25 or newer
+- RCPlatform 1.0.0
 - Vault
 
 RCDoors is built and tested for Paper 26.2. Other server versions or implementations are outside this fork's support
@@ -34,7 +35,7 @@ target.
 
 ## Installation
 
-1. Install Vault on the server.
+1. Install RCPlatform and Vault on the server.
 2. Place `RCDoors.jar` in the server's `plugins` directory.
 3. Start or restart the server.
 4. Review the generated files in `plugins/RCDoors` before opening the server to players.
@@ -103,6 +104,10 @@ RCDoors retains the upstream Java packages and public API types under `nl.pim16a
 compiled against the AnimatedArchitecture API should not rename imports merely because the installed plugin is branded
 RCDoors. Runtime consumers should account for the RCDoors plugin name while retaining compatibility with the legacy
 name where appropriate.
+
+New RepubliCraft integrations should resolve RCPlatform's `DoorService` instead of dispatching RCDoors console
+commands. The service accepts decimal AnimatedArchitecture structure UIDs, returns explicit outcomes, and keeps the
+upstream implementation types behind the adapter boundary.
 
 For the original API documentation and project history, refer to the
 [AnimatedArchitecture repository](https://github.com/PimvanderLoos/AnimatedArchitecture) and its

@@ -17,6 +17,7 @@ Relative to the identified upstream revision, this fork:
 - targets the RepubliCraft Paper 26.2 server environment and Java 25;
 - presents the plugin to players and administrators as RCDoors;
 - produces the deployable artifact as `RCDoors.jar`;
+- registers an owner-bound RCPlatform `DoorService` adapter over the native AnimatedArchitecture structure API;
 - can import an existing `plugins/AnimatedArchitecture` data directory on the first RCDoors startup without modifying
   the legacy source directory;
 - preserves the upstream Java packages, API types, database format, extension identifiers, and permission nodes, and

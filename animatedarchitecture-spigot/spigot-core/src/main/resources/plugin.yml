@@ -9,6 +9,7 @@ api-version: 26.2
 provides:
   - AnimatedArchitecture
 depend:
+  - RCPlatform
   - Vault
 libraries:
   - it.unimi.dsi:fastutil:${dependency.fastutil.version}

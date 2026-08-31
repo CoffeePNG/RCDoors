@@ -3,6 +3,15 @@ package nl.pim16aap2.animatedarchitecture.spigot.core;
 import com.google.common.flogger.FluentLogger;
 import lombok.AccessLevel;
 import lombok.Getter;
+import net.republicraft.platform.api.capability.CapabilityKey;
+import net.republicraft.platform.api.capability.CapabilityRegistry;
+import net.republicraft.platform.api.capability.CapabilityStatus;
+import net.republicraft.platform.api.diagnostics.DiagnosticResult;
+import net.republicraft.platform.api.diagnostics.DiagnosticSeverity;
+import net.republicraft.platform.api.diagnostics.DiagnosticsService;
+import net.republicraft.platform.api.door.DoorService;
+import net.republicraft.platform.api.service.RegistrationGroup;
+import net.republicraft.platform.api.service.Services;
 import nl.pim16aap2.animatedarchitecture.core.api.IAnimatedArchitecturePlatform;
 import nl.pim16aap2.animatedarchitecture.core.api.IAnimatedArchitecturePlatformProvider;
 import nl.pim16aap2.animatedarchitecture.core.api.IConfig;
@@ -64,6 +73,8 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
     private final long mainThreadId;
 
     private @Nullable AnimatedArchitectureSpigotPlatform animatedArchitectureSpigotPlatform;
+    private @Nullable RegistrationGroup rcPlatformRegistrations;
+    private @Nullable RCPlatformDoorService rcPlatformDoorService;
     // Avoid creating new Optional objects for every invocation; the result is going to be the same anyway.
     private volatile Optional<IAnimatedArchitecturePlatform> optionalPlatform = Optional.empty();
 
@@ -201,6 +212,9 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
 
         if (firstInit)
             initCommands(animatedArchitectureSpigotPlatform);
+
+        if (successfulInit)
+            registerRCPlatform(animatedArchitectureSpigotPlatform);
     }
 
     private void initCommands(AnimatedArchitectureSpigotPlatform animatedArchitectureSpigotPlatform)
@@ -220,7 +234,71 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
     public void onDisable()
     {
         log.atInfo().log("Disabling RCDoors %s...", getDescription().getVersion());
-        restartableHolder.shutDown();
+        try
+        {
+            unregisterRCPlatform();
+        }
+        finally
+        {
+            restartableHolder.shutDown();
+        }
+    }
+
+    private void registerRCPlatform(AnimatedArchitectureSpigotPlatform platform)
+    {
+        unregisterRCPlatform();
+
+        final var doorService = new RCPlatformDoorService(platform);
+        final var registrations = new RegistrationGroup();
+        try
+        {
+            registrations.add(Services.register(this, DoorService.class, doorService));
+
+            final CapabilityRegistry capabilities = Services.require(this, CapabilityRegistry.class);
+            registrations.add(capabilities.register(
+                this,
+                new CapabilityKey("rcdoors", "door-control"),
+                CapabilityStatus.AVAILABLE,
+                "Open, close, toggle, and query structures by decimal UID"));
+
+            final DiagnosticsService diagnostics = Services.require(this, DiagnosticsService.class);
+            registrations.add(diagnostics.register(this, "rcdoors.door-service", () -> doorService.isActive() ?
+                DiagnosticResult.ok("rcdoors.door-service", "Door service is registered") :
+                new DiagnosticResult(
+                    "rcdoors.door-service",
+                    DiagnosticSeverity.ERROR,
+                    "Door service is inactive",
+                    "Restart RCDoors after verifying its database and RCPlatform dependency")));
+        }
+        catch (RuntimeException exception)
+        {
+            doorService.disable();
+            try
+            {
+                registrations.close();
+            }
+            catch (RuntimeException cleanupFailure)
+            {
+                exception.addSuppressed(cleanupFailure);
+            }
+            throw exception;
+        }
+
+        rcPlatformDoorService = doorService;
+        rcPlatformRegistrations = registrations;
+    }
+
+    private void unregisterRCPlatform()
+    {
+        final @Nullable RCPlatformDoorService doorService = rcPlatformDoorService;
+        final @Nullable RegistrationGroup registrations = rcPlatformRegistrations;
+        rcPlatformDoorService = null;
+        rcPlatformRegistrations = null;
+
+        if (doorService != null)
+            doorService.disable();
+        if (registrations != null)
+            registrations.close();
     }
 
     public ClassLoader getPluginClassLoader()
