@@ -5,8 +5,10 @@ import lombok.Getter;
 import lombok.extern.flogger.Flogger;
 import nl.pim16aap2.animatedarchitecture.core.animation.StructureActivityManager;
 import nl.pim16aap2.animatedarchitecture.core.annotations.Initializer;
+import nl.pim16aap2.animatedarchitecture.core.api.HighlightedBlockSpawner;
 import nl.pim16aap2.animatedarchitecture.core.api.IAnimatedArchitectureToolUtil;
 import nl.pim16aap2.animatedarchitecture.core.api.IEconomyManager;
+import nl.pim16aap2.animatedarchitecture.core.api.IExecutor;
 import nl.pim16aap2.animatedarchitecture.core.api.ILocation;
 import nl.pim16aap2.animatedarchitecture.core.api.IPlayer;
 import nl.pim16aap2.animatedarchitecture.core.api.IProtectionHookManager;
@@ -363,13 +365,19 @@ public abstract class ToolUser
             obj, (obj == null ? "null" : obj.getClass().getSimpleName()),
             procedure.getCurrentStepName(), this);
 
+        if (obj instanceof ToolClick toolClick && !acceptsToolClicks() && !toolClick.isLeftClick())
+            // Only the block selection step uses the right mouse button; every other step ignores it.
+            return CompletableFuture.completedFuture(false);
+
+        final @Nullable Object input = adaptToolClick(obj);
+
         if (!isActive())
             return CompletableFuture.failedFuture(new IllegalStateException(
                 "Cannot handle input '" + obj + "' for ToolUser '" + this + "' because it is not active!"));
 
         final boolean isLastStep = !procedure.hasNextStep();
 
-        return applyInput(obj)
+        return applyInput(input)
             .thenCompose(inputSuccess ->
             {
                 if (!inputSuccess)
@@ -390,6 +398,34 @@ public abstract class ToolUser
                 throw new RuntimeException(
                     "An error occurred applying input '" + obj + "' for ToolUser '" + this + "'!", ex);
             });
+    }
+
+    /**
+     * Adapts a {@link ToolClick} to the input type the current step expects.
+     * <p>
+     * Steps that accept a {@link ToolClick} (currently only the block selection step) receive it as-is, so that they
+     * can tell the two mouse buttons apart. Every other step only knows about locations and is given the location of
+     * the click instead.
+     *
+     * @param obj
+     *     The input to adapt. Inputs that are not a {@link ToolClick} are returned unchanged.
+     * @return The adapted input.
+     */
+    private @Nullable Object adaptToolClick(@Nullable Object obj)
+    {
+        if (!(obj instanceof ToolClick toolClick))
+            return obj;
+
+        return acceptsToolClicks() ? toolClick : toolClick.location();
+    }
+
+    /**
+     * @return True if the current step handles {@link ToolClick}s itself instead of plain locations.
+     */
+    private boolean acceptsToolClicks()
+    {
+        final @Nullable Step step = procedure.getCurrentStep();
+        return step != null && step.getStepExecutor().getInputClass().isAssignableFrom(ToolClick.class);
     }
 
     /**
@@ -458,9 +494,37 @@ public abstract class ToolUser
         assertInitialized();
         final var message = procedure.getMessage(step);
         if (message.isEmpty())
+        {
             log.atWarning().log("Missing translation for step: %s", procedure.getStepName(step));
-        else
-            getPlayer().sendMessage(message);
+            return;
+        }
+        getPlayer().sendMessage(withStepProgress(message));
+    }
+
+    /**
+     * Prefixes a step's instructions with the progress through the procedure, e.g. "[Step 3/8]".
+     * <p>
+     * Knowing how many steps are left takes a lot of the guesswork out of the creation process, especially for players
+     * who are using it for the first time.
+     *
+     * @param message
+     *     The instructions of the step.
+     * @return The instructions, prefixed with the progress.
+     */
+    private Text withStepProgress(Text message)
+    {
+        final @Nullable String progressFormat = localizer.getMessage("tool_user.base.step_progress");
+        if (progressFormat == null || progressFormat.isBlank())
+            return message;
+
+        return textFactory
+            .newText()
+            .append(
+                progressFormat,
+                TextType.INFO,
+                arg -> arg.highlight(procedure.getCurrentStepNumber()),
+                arg -> arg.highlight(procedure.getStepCount()))
+            .append(message);
     }
 
     /**
@@ -742,6 +806,8 @@ public abstract class ToolUser
         private final @Nullable StructureAnimationRequestBuilder structureAnimationRequestBuilder;
         private final StructureActivityManager structureActivityManager;
         private final Step.Factory.IFactory stepFactory;
+        private final HighlightedBlockSpawner highlightedBlockSpawner;
+        private final IExecutor executor;
 
         @Inject
         public Context(
@@ -757,7 +823,9 @@ public abstract class ToolUser
             @Nullable StructureAnimationRequestBuilder structureAnimationRequestBuilder,
             StructureActivityManager structureActivityManager,
             CommandFactory commandFactory,
-            Step.Factory.IFactory stepFactory)
+            Step.Factory.IFactory stepFactory,
+            HighlightedBlockSpawner highlightedBlockSpawner,
+            IExecutor executor)
         {
             this.structureBuilder = structureBuilder;
             this.localizer = localizer;
@@ -772,6 +840,8 @@ public abstract class ToolUser
             this.commandFactory = commandFactory;
             this.textFactory = textFactory;
             this.stepFactory = stepFactory;
+            this.highlightedBlockSpawner = highlightedBlockSpawner;
+            this.executor = executor;
         }
     }
 }

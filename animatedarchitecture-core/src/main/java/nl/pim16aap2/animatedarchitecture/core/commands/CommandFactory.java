@@ -37,6 +37,8 @@ public final class CommandFactory
     @Delegate
     private final UpdateCreator.IFactory updateCreatorFactory;
     @Delegate
+    private final SelectBlocks.IFactory selectBlocksFactory;
+    @Delegate
     private final RemoveOwner.IFactory removeOwnerFactory;
     @Delegate
     private final SetOpenStatus.IFactory setOpenStatusFactory;
@@ -82,6 +84,7 @@ public final class CommandFactory
         MovePowerBlock.IFactory movePowerBlockFactory,
         NewStructure.IFactory newDoorFactory,
         RemoveOwner.IFactory removeOwnerFactory, RemoveOwnerDelayed removeOwnerDelayed,
+        SelectBlocks.IFactory selectBlocksFactory,
         Restart.IFactory restartFactory,
         SetBlocksToMove.IFactory setBlocksToMoveFactory, SetBlocksToMoveDelayed setBlocksToMoveDelayed,
         SetName.IFactory setNameFactory,
@@ -108,6 +111,7 @@ public final class CommandFactory
         this.menuFactory = menuFactory;
         this.updateCreatorFactory = updateCreatorFactory;
         this.removeOwnerFactory = removeOwnerFactory;
+        this.selectBlocksFactory = selectBlocksFactory;
         this.setOpenDirectionFactory = setOpenDirectionFactory;
         this.stopDoorsFactory = stopDoorsFactory;
         this.lockFactory = lockFactory;

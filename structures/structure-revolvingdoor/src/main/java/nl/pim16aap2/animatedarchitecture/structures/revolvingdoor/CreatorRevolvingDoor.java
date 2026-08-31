@@ -49,6 +49,7 @@ public class CreatorRevolvingDoor extends CreatorBigDoor
                     TextType.INFO,
                     getStructureArg()))
                 .construct(),
+            factorySelectBlocks.construct(),
             factoryProvideRotationPointPos
                 .textSupplier(text -> text.append(
                     localizer.getMessage("creator.revolving_door.step_3"),

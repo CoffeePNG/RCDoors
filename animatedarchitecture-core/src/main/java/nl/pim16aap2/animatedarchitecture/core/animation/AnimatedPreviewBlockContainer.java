@@ -11,6 +11,7 @@ import nl.pim16aap2.animatedarchitecture.core.api.animatedblock.AnimatedHighligh
 import nl.pim16aap2.animatedarchitecture.core.api.animatedblock.IAnimatedBlock;
 import nl.pim16aap2.animatedarchitecture.core.api.factories.ILocationFactory;
 import nl.pim16aap2.animatedarchitecture.core.structures.StructureSnapshot;
+import nl.pim16aap2.animatedarchitecture.core.util.BlockSelection;
 import nl.pim16aap2.animatedarchitecture.core.util.Cuboid;
 import nl.pim16aap2.animatedarchitecture.core.util.vector.Vector3Di;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +69,8 @@ public class AnimatedPreviewBlockContainer implements IAnimatedBlockContainer
 
         try
         {
+            final @Nullable BlockSelection blockMask = snapshot.getBlockMask();
+
             final Cuboid cuboid = snapshot.getCuboid();
             final int xMin = cuboid.getMin().x();
             final int yMin = cuboid.getMin().y();
@@ -81,6 +84,9 @@ public class AnimatedPreviewBlockContainer implements IAnimatedBlockContainer
                 for (int yAxis = yMax; yAxis >= yMin; --yAxis)
                     for (int zAxis = zMin; zAxis <= zMax; ++zAxis)
                     {
+                        if (blockMask != null && !blockMask.contains(xAxis, yAxis, zAxis))
+                            continue;
+
                         final Vector3Di position = new Vector3Di(xAxis, yAxis, zAxis);
                         final float radius = animationComponent.getRadius(xAxis, yAxis, zAxis);
                         final Color color = getColor(cuboid, position);

@@ -5,12 +5,15 @@ import nl.pim16aap2.animatedarchitecture.core.api.IPlayer;
 import nl.pim16aap2.animatedarchitecture.core.api.IWorld;
 import nl.pim16aap2.animatedarchitecture.core.structures.properties.IPropertyContainerConst;
 import nl.pim16aap2.animatedarchitecture.core.structures.properties.IPropertyHolderConst;
+import nl.pim16aap2.animatedarchitecture.core.structures.properties.Property;
 import nl.pim16aap2.animatedarchitecture.core.structures.properties.PropertyContainerSnapshot;
+import nl.pim16aap2.animatedarchitecture.core.util.BlockSelection;
 import nl.pim16aap2.animatedarchitecture.core.util.Cuboid;
 import nl.pim16aap2.animatedarchitecture.core.util.LocationUtil;
 import nl.pim16aap2.animatedarchitecture.core.util.MovementDirection;
 import nl.pim16aap2.animatedarchitecture.core.util.Rectangle;
 import nl.pim16aap2.animatedarchitecture.core.util.vector.Vector3Di;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -277,7 +280,21 @@ public interface IStructureConst extends IPropertyHolderConst
      */
     default int getBlockCount()
     {
-        return getCuboid().getVolume();
+        final @Nullable BlockSelection blockMask = getPropertyValue(Property.BLOCK_MASK).value();
+        return blockMask == null ? getCuboid().getVolume() : blockMask.size();
+    }
+
+    /**
+     * Gets the block mask of this structure, if it has one.
+     * <p>
+     * When a structure has a block mask, only the blocks that are part of the mask are animated. Structures without a
+     * mask consist of every block inside {@link #getCuboid()}.
+     *
+     * @return The block mask of this structure, or null if every block in its cuboid is part of the structure.
+     */
+    default @Nullable BlockSelection getBlockMask()
+    {
+        return getPropertyValue(Property.BLOCK_MASK).value();
     }
 
     /**

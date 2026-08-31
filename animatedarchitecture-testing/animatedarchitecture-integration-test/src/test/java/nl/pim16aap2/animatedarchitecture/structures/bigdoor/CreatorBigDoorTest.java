@@ -1,5 +1,6 @@
 package nl.pim16aap2.animatedarchitecture.structures.bigdoor;
 
+import nl.pim16aap2.animatedarchitecture.core.tooluser.BlockSelectionAction;
 import nl.pim16aap2.animatedarchitecture.core.structures.Structure;
 import nl.pim16aap2.animatedarchitecture.core.structures.StructureType;
 import nl.pim16aap2.animatedarchitecture.core.structures.properties.Property;
@@ -43,6 +44,7 @@ class CreatorBigDoorTest extends CreatorTestsUtil
             structureName,
             min.toLocation(locationFactory, world),
             max.toLocation(locationFactory, world),
+            BlockSelectionAction.DONE,
             rotationPoint.toLocation(locationFactory, world),
             powerblock.toLocation(locationFactory, world),
             openStatus,

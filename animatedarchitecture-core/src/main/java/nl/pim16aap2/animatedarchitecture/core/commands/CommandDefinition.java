@@ -143,6 +143,12 @@ public final class CommandDefinition
         StructureAttribute.TOGGLE.getAdminPermissionNode()
     );
 
+    public static final CommandDefinition SELECT_BLOCKS = new CommandDefinition(
+        "SELECT_BLOCKS",
+        Constants.PERMISSION_PREFIX_USER + "base",
+        null
+    );
+
     public static final CommandDefinition UPDATE_CREATOR = new CommandDefinition(
         "UPDATE_CREATOR",
         Constants.PERMISSION_PREFIX_USER + "base",

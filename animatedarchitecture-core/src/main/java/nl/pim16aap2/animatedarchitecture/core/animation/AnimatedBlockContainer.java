@@ -8,6 +8,7 @@ import nl.pim16aap2.animatedarchitecture.core.api.IExecutor;
 import nl.pim16aap2.animatedarchitecture.core.api.animatedblock.IAnimatedBlock;
 import nl.pim16aap2.animatedarchitecture.core.api.animatedblock.IAnimatedBlockFactory;
 import nl.pim16aap2.animatedarchitecture.core.structures.StructureSnapshot;
+import nl.pim16aap2.animatedarchitecture.core.util.BlockSelection;
 import nl.pim16aap2.animatedarchitecture.core.util.vector.IVector3D;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +65,8 @@ public class AnimatedBlockContainer implements IAnimatedBlockContainer
 
         try
         {
+            final @Nullable BlockSelection blockMask = snapshot.getBlockMask();
+
             final int xMin = snapshot.getCuboid().getMin().x();
             final int yMin = snapshot.getCuboid().getMin().y();
             final int zMin = snapshot.getCuboid().getMin().z();
@@ -76,6 +79,9 @@ public class AnimatedBlockContainer implements IAnimatedBlockContainer
                 for (posY = yMax; posY >= yMin; --posY)
                     for (posZ = zMin; posZ <= zMax; ++posZ)
                     {
+                        if (blockMask != null && !blockMask.contains(posX, posY, posZ))
+                            continue;
+
                         final boolean onEdge =
                             posX == xMin ||
                                 posX == xMax ||

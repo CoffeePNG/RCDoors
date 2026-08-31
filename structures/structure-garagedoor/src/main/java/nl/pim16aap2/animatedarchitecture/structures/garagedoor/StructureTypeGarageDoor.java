@@ -36,6 +36,7 @@ public final class StructureTypeGarageDoor extends StructureType
                 MovementDirection.SOUTH,
                 MovementDirection.WEST),
             List.of(
+                Property.BLOCK_MASK,
                 Property.ANIMATION_SPEED_MULTIPLIER,
                 Property.OPEN_STATUS,
                 Property.REDSTONE_MODE,

@@ -1,5 +1,6 @@
 package nl.pim16aap2.animatedarchitecture.creator;
 
+import nl.pim16aap2.animatedarchitecture.core.tooluser.BlockSelectionAction;
 import nl.pim16aap2.animatedarchitecture.core.UnitTestUtil;
 import nl.pim16aap2.animatedarchitecture.core.api.IPlayer;
 import nl.pim16aap2.animatedarchitecture.core.structures.Structure;
@@ -78,6 +79,7 @@ class CreatorFullTest extends CreatorTestsUtil
             structureName,
             UnitTestUtil.getLocation(min, world),
             UnitTestUtil.getLocation(max, world),
+            BlockSelectionAction.DONE,
             UnitTestUtil.getLocation(rotationPoint, world),
             UnitTestUtil.getLocation(powerblock, world),
             isOpen,
@@ -103,6 +105,7 @@ class CreatorFullTest extends CreatorTestsUtil
             structureName,
             UnitTestUtil.getLocation(min, world),
             UnitTestUtil.getLocation(max, world),
+            BlockSelectionAction.DONE,
             UnitTestUtil.getLocation(cuboid.getCenterBlock(), world),
             UnitTestUtil.getLocation(powerblock, world)
         );
@@ -138,6 +141,7 @@ class CreatorFullTest extends CreatorTestsUtil
                 factoryProvideName.messageKey("CREATOR_BASE_GIVE_NAME").construct(),
                 factoryProvideFirstPos.messageKey("CREATOR_BIG_DOOR_STEP1").construct(),
                 factoryProvideSecondPos.messageKey("CREATOR_BIG_DOOR_STEP2").construct(),
+                factorySelectBlocks.construct(),
                 factoryProvideRotationPointPos.messageKey("CREATOR_BIG_DOOR_STEP3").construct(),
                 factoryProvidePowerBlockPos.messageKey("CREATOR_BASE_SET_POWER_BLOCK").construct(),
                 factoryProvideOpenStatus.messageKey("CREATOR_BASE_SET_OPEN_DIR").construct(),

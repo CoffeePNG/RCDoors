@@ -95,6 +95,7 @@ public class CreatorClock extends Creator
                     TextType.INFO,
                     getStructureArg()))
                 .construct(),
+            factorySelectBlocks.construct(),
             stepSelectHourArm,
             factoryProvidePowerBlockPos.construct(),
             factoryReviewResult.construct(),

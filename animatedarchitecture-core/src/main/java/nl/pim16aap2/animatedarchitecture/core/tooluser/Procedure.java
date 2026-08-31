@@ -350,6 +350,29 @@ public final class Procedure
     }
 
     /**
+     * Gets the total number of steps in this procedure.
+     * <p>
+     * Note that this includes steps that may end up being skipped, as whether a step is skipped can depend on the
+     * user's earlier answers.
+     *
+     * @return The total number of steps in this procedure.
+     */
+    public synchronized int getStepCount()
+    {
+        return stepMap.size();
+    }
+
+    /**
+     * Gets the one-based number of the current step, for use in messages like "step 3 of 8".
+     *
+     * @return The number of the current step.
+     */
+    public synchronized int getCurrentStepNumber()
+    {
+        return Math.min(stepsCompleted + 1, getStepCount());
+    }
+
+    /**
      * Gets the number of steps that have been completed.
      *
      * @return The number of steps that have been completed.

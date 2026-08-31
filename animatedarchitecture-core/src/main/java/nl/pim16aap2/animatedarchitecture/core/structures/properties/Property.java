@@ -8,6 +8,7 @@ import nl.pim16aap2.animatedarchitecture.core.api.IKeyed;
 import nl.pim16aap2.animatedarchitecture.core.api.NamespacedKey;
 import nl.pim16aap2.animatedarchitecture.core.api.debugging.IDebuggable;
 import nl.pim16aap2.animatedarchitecture.core.structures.RedstoneMode;
+import nl.pim16aap2.animatedarchitecture.core.util.BlockSelection;
 import nl.pim16aap2.animatedarchitecture.core.util.Constants;
 import nl.pim16aap2.animatedarchitecture.core.util.StringUtil;
 import nl.pim16aap2.animatedarchitecture.core.util.vector.Vector3Di;
@@ -95,6 +96,23 @@ public final class Property<T> implements IKeyed
         null,
         PropertyAccessLevel.USER_EDITABLE,
         // Changing the blocks to move may affect things like animation range.
+        PropertyScope.ANIMATION
+    );
+
+    /**
+     * A property that describes which individual blocks inside a structure's cuboid belong to the structure.
+     * <p>
+     * Structures always occupy a cuboid, but they do not have to fill it: with this property set, only the blocks that
+     * are part of the selection are animated. This is what the selection wand produces. When it is not set, the
+     * structure consists of every block in its cuboid, which is the behavior structures have always had.
+     */
+    public static final Property<BlockSelection> BLOCK_MASK = new Property<>(
+        "BLOCK_MASK",
+        BlockSelection.class,
+        null,
+        // The mask is edited with the selection wand rather than with a command.
+        PropertyAccessLevel.VISIBLE,
+        // The mask determines which blocks are animated.
         PropertyScope.ANIMATION
     );
 

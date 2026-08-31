@@ -42,7 +42,7 @@ public class AsyncStepExecutor<T> extends StepExecutor
     }
 
     @Override
-    protected Class<?> getInputClass()
+    public Class<?> getInputClass()
     {
         return inputClass;
     }

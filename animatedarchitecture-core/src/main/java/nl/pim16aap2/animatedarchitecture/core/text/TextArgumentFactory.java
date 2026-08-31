@@ -166,4 +166,25 @@ public final class TextArgumentFactory
     {
         return clickable(argument, TextType.CLICKABLE, command, null);
     }
+
+    /**
+     * Shortcut for creating a new {@link TextArgument} with a {@link TextComponent} that puts a command in the
+     * player's chat box when clicked, without running it.
+     * <p>
+     * See {@link ITextComponentFactory#newSuggestedCommandTextComponent(TextType, String, String)}.
+     *
+     * @param argument
+     *     The argument.
+     * @param command
+     *     The command to suggest when this text is clicked.
+     * @param info
+     *     The optional information String explaining what clicking the text will do.
+     * @return The new TextArgument.
+     */
+    public TextArgument suggestCommand(Object argument, String command, @Nullable String info)
+    {
+        return new TextArgument(
+            argument,
+            textComponentFactory.newSuggestedCommandTextComponent(TextType.CLICKABLE, command, info));
+    }
 }

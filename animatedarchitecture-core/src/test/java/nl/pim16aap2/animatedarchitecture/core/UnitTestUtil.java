@@ -1,6 +1,7 @@
 package nl.pim16aap2.animatedarchitecture.core;
 
 import lombok.AllArgsConstructor;
+import nl.pim16aap2.animatedarchitecture.core.api.IExecutor;
 import nl.pim16aap2.animatedarchitecture.core.api.ILocation;
 import nl.pim16aap2.animatedarchitecture.core.api.IPlayer;
 import nl.pim16aap2.animatedarchitecture.core.api.IWorld;
@@ -689,5 +690,19 @@ public class UnitTestUtil
         {
             return base.equals(argument.toString());
         }
+    }
+
+    /**
+     * Creates an {@link IExecutor} that considers every thread the main thread, so that anything scheduled on the main
+     * thread simply runs inline.
+     *
+     * @return The new executor.
+     */
+    public static IExecutor newMainThreadExecutor()
+    {
+        final IExecutor executor =
+            Mockito.mock(IExecutor.class, Mockito.withSettings().defaultAnswer(Mockito.CALLS_REAL_METHODS));
+        Mockito.doReturn(true).when(executor).isMainThread(Mockito.anyLong());
+        return executor;
     }
 }

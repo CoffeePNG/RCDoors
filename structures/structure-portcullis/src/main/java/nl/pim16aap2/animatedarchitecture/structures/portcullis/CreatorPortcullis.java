@@ -75,6 +75,7 @@ public class CreatorPortcullis extends Creator
                     TextType.INFO,
                     getStructureArg()))
                 .construct(),
+            factorySelectBlocks.construct(),
             factoryProvidePowerBlockPos.construct(),
             factoryProvideOpenStatus.construct(),
             factoryProvideOpenDir.construct(),
