@@ -30,6 +30,7 @@ public final class StructureTypeWindmill extends StructureType
                 MovementDirection.WEST),
             List.of(
                 Property.BLOCK_MASK,
+                Property.PROXIMITY_RADIUS,
                 Property.ANIMATION_SPEED_MULTIPLIER,
                 Property.ROTATION_POINT
             ),

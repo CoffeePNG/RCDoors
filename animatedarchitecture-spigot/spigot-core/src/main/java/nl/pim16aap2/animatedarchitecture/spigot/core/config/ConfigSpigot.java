@@ -99,6 +99,10 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
     private int coolDown;
     private OptionalInt maxStructureSize = OptionalInt.empty();
     private OptionalInt maxPowerBlockDistance = OptionalInt.empty();
+    private boolean enableProximity;
+    private OptionalInt maxProximityRadius = OptionalInt.empty();
+    private int proximityCheckInterval;
+    private int proximityCloseDelay;
     private boolean resourcePackEnabled = false;
     private final String resourcePack =
         "https://www.dropbox.com/s/8vpwzjkd9jnp1xu/AnimatedArchitectureResourcePack-Format12.zip?dl=1";
@@ -182,6 +186,29 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
             # When set to true, the plugin will try to load all chunks the structure will interact with before toggling.
             # If more than 1 chunk needs to be loaded, the structure will skip its animation to avoid spawning a bunch
             # of entities no one can see anyway.
+            """;
+
+        final String enableProximityComment = """
+            # Allow structures to be opened by players walking up to them.
+            # Each structure has its own radius, which its owner sets with the /rcdoors setproximity command.
+            # When this is disabled, those radii are ignored and no structure opens for nearby players.
+            """;
+
+        final String maxProximityRadiusComment = """
+            # The largest radius (in blocks) players may set for proximity opening.
+            # Larger radii mean the server has to look at more chunks on every check.
+            # Set to -1 for no limit (not recommended on busy servers).
+            """;
+
+        final String proximityCheckIntervalComment = """
+            # How often (in ticks, 20 ticks = 1 second) the server checks whether players are near a structure that
+            # uses proximity opening. Lower values make structures react faster, but cost more performance.
+            """;
+
+        final String proximityCloseDelayComment = """
+            # How long (in seconds) a structure stays open after the last player left its proximity radius.
+            # A short delay keeps structures from flapping open and closed when a player stands on the edge of the
+            # radius. Set to 0 to close as soon as the last player leaves.
             """;
 
         final String enableRedstoneComment = """
@@ -421,6 +448,30 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
 
         this.maxPowerBlockDistance =
             maxPowerBlockDistance > 0 ? OptionalInt.of(maxPowerBlockDistance) : OptionalInt.empty();
+
+        enableProximity = addNewConfigEntry(config, "allowProximity", true, enableProximityComment);
+
+        final int maxProximityRadius = addNewConfigEntry(
+            config,
+            "maxProximityRadius",
+            32,
+            maxProximityRadiusComment
+        );
+        this.maxProximityRadius = maxProximityRadius > 0 ? OptionalInt.of(maxProximityRadius) : OptionalInt.empty();
+
+        proximityCheckInterval = Math.max(1, addNewConfigEntry(
+            config,
+            "proximityCheckInterval",
+            10,
+            proximityCheckIntervalComment
+        ));
+
+        proximityCloseDelay = Math.max(0, addNewConfigEntry(
+            config,
+            "proximityCloseDelay",
+            3,
+            proximityCloseDelayComment
+        ));
 
         String localeStr = addNewConfigEntry(config, "locale", "root", localeComment);
         // "root" isn't actually a valid country that can be used by a Locale.
@@ -831,6 +882,30 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
     public OptionalInt maxBlocksToMove()
     {
         return maxBlocksToMove;
+    }
+
+    @Override
+    public boolean isProximityEnabled()
+    {
+        return enableProximity;
+    }
+
+    @Override
+    public OptionalInt maxProximityRadius()
+    {
+        return maxProximityRadius;
+    }
+
+    @Override
+    public int proximityCheckInterval()
+    {
+        return proximityCheckInterval;
+    }
+
+    @Override
+    public int proximityCloseDelay()
+    {
+        return proximityCloseDelay;
     }
 
     @Override

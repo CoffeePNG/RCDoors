@@ -39,6 +39,8 @@ public final class CommandFactory
     @Delegate
     private final SelectBlocks.IFactory selectBlocksFactory;
     @Delegate
+    private final SetProximity.IFactory setProximityFactory;
+    @Delegate
     private final RemoveOwner.IFactory removeOwnerFactory;
     @Delegate
     private final SetOpenStatus.IFactory setOpenStatusFactory;
@@ -67,6 +69,8 @@ public final class CommandFactory
     private final SetOpenStatusDelayed setOpenStatusDelayed;
     @Getter
     private final SetBlocksToMoveDelayed setBlocksToMoveDelayed;
+    @Getter
+    private final SetProximityDelayed setProximityDelayed;
 
     @Inject
     CommandFactory(
@@ -85,6 +89,7 @@ public final class CommandFactory
         NewStructure.IFactory newDoorFactory,
         RemoveOwner.IFactory removeOwnerFactory, RemoveOwnerDelayed removeOwnerDelayed,
         SelectBlocks.IFactory selectBlocksFactory,
+        SetProximity.IFactory setProximityFactory, SetProximityDelayed setProximityDelayed,
         Restart.IFactory restartFactory,
         SetBlocksToMove.IFactory setBlocksToMoveFactory, SetBlocksToMoveDelayed setBlocksToMoveDelayed,
         SetName.IFactory setNameFactory,
@@ -112,6 +117,8 @@ public final class CommandFactory
         this.updateCreatorFactory = updateCreatorFactory;
         this.removeOwnerFactory = removeOwnerFactory;
         this.selectBlocksFactory = selectBlocksFactory;
+        this.setProximityFactory = setProximityFactory;
+        this.setProximityDelayed = setProximityDelayed;
         this.setOpenDirectionFactory = setOpenDirectionFactory;
         this.stopDoorsFactory = stopDoorsFactory;
         this.lockFactory = lockFactory;

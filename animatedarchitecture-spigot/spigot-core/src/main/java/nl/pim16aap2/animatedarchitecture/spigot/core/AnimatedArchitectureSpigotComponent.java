@@ -154,6 +154,8 @@ interface AnimatedArchitectureSpigotComponent
 
     RedstoneListener getRedstoneListener();
 
+    ProximityTracker getProximityTracker();
+
     LoginResourcePackListener getLoginResourcePackListener();
 
     IExecutor getExecutor();
