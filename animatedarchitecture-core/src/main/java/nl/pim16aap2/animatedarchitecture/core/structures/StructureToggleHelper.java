@@ -371,6 +371,9 @@ final class StructureToggleHelper
         if (!animationType.requiresWriteAccess())
             return toggle(stamp, targetStructure, data, component, player, animationType);
 
+        if (!requiresProtectionCheck(data.getCause()))
+            return toggle(stamp, targetStructure, data, component, player, animationType);
+
         return canBreakBlocks(snapshot, snapshot.getCuboid(), data.getNewCuboid(), data.getResponsible())
             .thenCompose(canBreakBlocks ->
             {
@@ -387,6 +390,12 @@ final class StructureToggleHelper
             });
 
 
+    }
+
+    /** Console/server-owned movement is authoritative; every player or plugin cause remains protection-checked. */
+    static boolean requiresProtectionCheck(StructureActionCause cause)
+    {
+        return cause != StructureActionCause.SERVER;
     }
 
     private CompletableFuture<StructureToggleResult> toggle(

@@ -120,8 +120,7 @@ final class RCPlatformDoorService implements DoorService
         if (!active)
             return completed(DoorResult.Status.UNAVAILABLE, stateBefore, "RCDoors is not active");
 
-        final StructureActionCause cause = responsible == null ?
-            StructureActionCause.PLUGIN : StructureActionCause.PLAYER;
+        final StructureActionCause cause = actionCause(request);
         final StructureAnimationRequestBuilder.IBuilder builder = platform
             .getStructureAnimationRequestBuilder()
             .structure(platform.getStructureRetrieverFactory().of(structure))
@@ -139,6 +138,12 @@ final class RCPlatformDoorService implements DoorService
             .execute()
             .thenApply(result -> result(result, request, stateBefore))
             .exceptionally(throwable -> failed(throwable, stateBefore));
+    }
+
+    /** System contract requests are server actions and must not inherit a structure owner's region permissions. */
+    static StructureActionCause actionCause(DoorRequest request)
+    {
+        return request.actorId() == null ? StructureActionCause.SERVER : StructureActionCause.PLAYER;
     }
 
     @Override

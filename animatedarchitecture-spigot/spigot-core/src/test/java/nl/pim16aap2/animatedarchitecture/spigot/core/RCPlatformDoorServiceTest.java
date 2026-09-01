@@ -27,6 +27,21 @@ class RCPlatformDoorServiceTest
     }
 
     @Test
+    void systemRequestsUseTheServerInsteadOfTheStructureOwner()
+    {
+        final DoorId doorId = new DoorId("7");
+        Assertions.assertEquals(
+            nl.pim16aap2.animatedarchitecture.core.events.StructureActionCause.SERVER,
+            RCPlatformDoorService.actionCause(DoorRequest.system(doorId, DoorAction.OPEN)));
+
+        final DoorRequest playerRequest = new DoorRequest(
+            doorId, DoorAction.OPEN, java.util.UUID.randomUUID(), Duration.ZERO, false);
+        Assertions.assertEquals(
+            nl.pim16aap2.animatedarchitecture.core.events.StructureActionCause.PLAYER,
+            RCPlatformDoorService.actionCause(playerRequest));
+    }
+
+    @Test
     void distinguishesNamesFromNumericIdentifiers()
     {
         Assertions.assertTrue(RCPlatformDoorService.isNumericIdentifier("42"));
