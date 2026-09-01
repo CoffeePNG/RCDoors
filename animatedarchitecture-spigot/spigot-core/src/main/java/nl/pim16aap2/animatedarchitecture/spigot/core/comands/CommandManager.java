@@ -178,6 +178,7 @@ public final class CommandManager
         initCmdRemoveOwner(manager, builder);
         initCmdRestart(manager, builder);
         initCmdSetBlocksToMove(manager, builder);
+        initCmdSetProximity(manager, builder);
         initCmdSetName(manager, builder);
         initCmdSetOpenDirection(manager, builder);
         initCmdSetOpenStatus(manager, builder);
@@ -423,6 +424,23 @@ public final class CommandManager
                         Property.BLOCKS_TO_MOVE
                     ).build())
                 .handler(commandExecutor::setBlocksToMove)
+        );
+    }
+
+    private void initCmdSetProximity(
+        BukkitCommandManager<ICommandSender> manager,
+        Command.Builder<ICommandSender> builder)
+    {
+        manager.command(
+            baseInit(builder, CommandDefinition.SET_PROXIMITY, "commands.set_proximity.description")
+                .argument(IntegerArgument.of("radius"))
+                .argument(
+                    defaultStructureArgument(
+                        false,
+                        StructureAttribute.PROXIMITY_RADIUS,
+                        Property.PROXIMITY_RADIUS
+                    ).build())
+                .handler(commandExecutor::setProximity)
         );
     }
 

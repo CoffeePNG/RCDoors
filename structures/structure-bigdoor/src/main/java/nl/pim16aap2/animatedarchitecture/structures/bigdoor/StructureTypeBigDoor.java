@@ -38,6 +38,7 @@ public final class StructureTypeBigDoor extends StructureType
                 MovementDirection.COUNTERCLOCKWISE),
             List.of(
                 Property.BLOCK_MASK,
+                Property.PROXIMITY_RADIUS,
                 Property.ANIMATION_SPEED_MULTIPLIER,
                 Property.OPEN_STATUS,
                 Property.QUARTER_CIRCLES,

@@ -231,6 +231,24 @@ class CommandExecutor
                 .exceptionally(FutureUtil::exceptionally);
     }
 
+    void setProximity(CommandContext<ICommandSender> context)
+    {
+        final int radius = context.get("radius");
+        final @Nullable StructureRetriever structureRetriever = nullable(context, "structureRetriever");
+
+        final ICommandSender commandSender = context.getSender();
+        if (structureRetriever != null)
+            commandFactory
+                .newSetProximity(commandSender, structureRetriever, radius)
+                .run()
+                .exceptionally(FutureUtil::exceptionally);
+        else
+            commandFactory
+                .getSetProximityDelayed()
+                .provideDelayedInput(commandSender, radius)
+                .exceptionally(FutureUtil::exceptionally);
+    }
+
     void setName(CommandContext<ICommandSender> context)
     {
         commandFactory

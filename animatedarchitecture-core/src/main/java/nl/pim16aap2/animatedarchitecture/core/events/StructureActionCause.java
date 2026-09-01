@@ -32,4 +32,9 @@ public enum StructureActionCause
      */
     PERPETUAL_MOVEMENT,
 
+    /**
+     * The action was initiated because a player moved into or out of range of the structure.
+     */
+    PROXIMITY,
+
 }

@@ -143,6 +143,19 @@ public final class Property<T> implements IKeyed
     );
 
     /**
+     * A property for structures that open when a player comes near them.
+     * <p>
+     * The value is the radius in blocks, measured from the structure's own blocks. A value of 0 (the default) means the
+     * structure ignores nearby players, which is how structures behaved before proximity opening existed.
+     */
+    public static final Property<Integer> PROXIMITY_RADIUS = new Property<>(
+        "PROXIMITY_RADIUS",
+        Integer.class,
+        0,
+        PropertyAccessLevel.USER_EDITABLE
+    );
+
+    /**
      * A property for structures that can have different redstone modes.
      */
     public static final Property<RedstoneMode> REDSTONE_MODE = new Property<>(

@@ -315,6 +315,26 @@ class AttributeButtonFactory
         );
     }
 
+    private GuiElement proximityButton(Structure structure, PlayerSpigot player, char slotChar)
+    {
+        return new StaticGuiElement(
+            slotChar,
+            new ItemStack(Material.TRIPWIRE_HOOK),
+            click ->
+            {
+                commandFactory
+                    .getSetProximityDelayed()
+                    .runDelayed(player, structureRetrieverFactory.of(structure))
+                    .exceptionally(FutureUtil::exceptionally);
+                GuiUtil.closeAllGuis(player);
+                return true;
+            },
+            localizer.getMessage(
+                "gui.info_page.attribute.proximity_radius",
+                localizer.getMessage(structure.getType().getLocalizationKey()))
+        );
+    }
+
     private GuiElement addOwnerButton(Structure structure, PlayerSpigot player, char slotChar)
     {
         return new StaticGuiElement(
@@ -374,6 +394,7 @@ class AttributeButtonFactory
             case OPEN_DIRECTION -> this.openDirectionButton(structure, player, slotChar);
             case OPEN_STATUS -> this.openStatusButton(structure, player, slotChar);
             case PREVIEW -> this.previewButton(structure, player, slotChar);
+            case PROXIMITY_RADIUS -> this.proximityButton(structure, player, slotChar);
             case RELOCATE_POWERBLOCK -> this.relocatePowerBlockButton(structure, player, slotChar);
             case REMOVE_OWNER -> this.removeOwnerButton(structure, player, slotChar);
             case SWITCH -> throw new UnsupportedOperationException("Switch attribute has not been implemented yet.");

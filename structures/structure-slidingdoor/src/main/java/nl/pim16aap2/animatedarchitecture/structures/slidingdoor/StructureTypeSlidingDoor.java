@@ -37,6 +37,7 @@ public final class StructureTypeSlidingDoor extends StructureType
                 MovementDirection.WEST),
             List.of(
                 Property.BLOCK_MASK,
+                Property.PROXIMITY_RADIUS,
                 Property.ANIMATION_SPEED_MULTIPLIER,
                 Property.BLOCKS_TO_MOVE,
                 Property.OPEN_STATUS,

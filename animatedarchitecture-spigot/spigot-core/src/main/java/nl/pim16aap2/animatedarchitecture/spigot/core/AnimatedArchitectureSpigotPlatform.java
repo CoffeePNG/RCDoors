@@ -205,6 +205,9 @@ public final class AnimatedArchitectureSpigotPlatform implements IAnimatedArchit
     private final RedstoneListener redstoneListener;
 
     @SuppressWarnings({"FieldCanBeLocal", "unused", "PMD.SingularField"})
+    private final ProximityTracker proximityTracker;
+
+    @SuppressWarnings({"FieldCanBeLocal", "unused", "PMD.SingularField"})
     private final WorldListener worldListener;
 
     @Getter
@@ -262,6 +265,7 @@ public final class AnimatedArchitectureSpigotPlatform implements IAnimatedArchit
             AnimatedArchitectureSpigotComponent::structureAnimationRequestBuilder);
 
         redstoneListener = safeGetter(AnimatedArchitectureSpigotComponent::getRedstoneListener);
+        proximityTracker = safeGetter(AnimatedArchitectureSpigotComponent::getProximityTracker);
         loginResourcePackListener = safeGetter(AnimatedArchitectureSpigotComponent::getLoginResourcePackListener);
         chunkListener = safeGetter(AnimatedArchitectureSpigotComponent::getChunkListener);
         eventListeners = safeGetter(AnimatedArchitectureSpigotComponent::getEventListeners);

@@ -30,6 +30,7 @@ public final class StructureTypeClock extends StructureType
                 MovementDirection.WEST),
             List.of(
                 Property.BLOCK_MASK,
+                Property.PROXIMITY_RADIUS,
                 Property.ROTATION_POINT
             ),
             "structure.type.clock"

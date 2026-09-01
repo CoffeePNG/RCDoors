@@ -107,6 +107,12 @@ public final class CommandDefinition
         StructureAttribute.BLOCKS_TO_MOVE.getAdminPermissionNode()
     );
 
+    public static final CommandDefinition SET_PROXIMITY = new CommandDefinition(
+        "SET_PROXIMITY",
+        Constants.PERMISSION_PREFIX_USER + "base",
+        StructureAttribute.PROXIMITY_RADIUS.getAdminPermissionNode()
+    );
+
     public static final CommandDefinition SET_NAME = new CommandDefinition(
         "SET_NAME",
         Constants.PERMISSION_PREFIX_USER + "base",

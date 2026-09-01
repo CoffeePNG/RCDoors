@@ -35,6 +35,7 @@ public final class StructureTypeRevolvingDoor extends StructureType
                 MovementDirection.COUNTERCLOCKWISE),
             List.of(
                 Property.BLOCK_MASK,
+                Property.PROXIMITY_RADIUS,
                 Property.ANIMATION_SPEED_MULTIPLIER,
                 Property.ROTATION_POINT
             ),

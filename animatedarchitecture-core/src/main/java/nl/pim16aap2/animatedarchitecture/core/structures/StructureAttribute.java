@@ -65,6 +65,11 @@ public enum StructureAttribute
     OPEN_STATUS(PermissionLevel.USER),
 
     /**
+     * The radius within which a nearby player opens the structure.
+     */
+    PROXIMITY_RADIUS(PermissionLevel.ADMIN),
+
+    /**
      * Relocate the power block.
      */
     RELOCATE_POWERBLOCK(PermissionLevel.ADMIN),

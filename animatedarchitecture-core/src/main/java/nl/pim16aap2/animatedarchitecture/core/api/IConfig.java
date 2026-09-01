@@ -92,6 +92,52 @@ public interface IConfig extends IRestartable
     boolean loadChunksForToggle();
 
     /**
+     * Whether structures may be opened by players walking up to them.
+     * <p>
+     * When this is disabled, the proximity radius of individual structures is ignored.
+     *
+     * @return True if proximity opening is enabled on this server.
+     */
+    default boolean isProximityEnabled()
+    {
+        return true;
+    }
+
+    /**
+     * The largest proximity radius players may set for a structure, in blocks.
+     * <p>
+     * Radii larger than this are clamped to it, both when they are set and when they are used.
+     *
+     * @return The maximum proximity radius, or an empty optional if it is unlimited.
+     */
+    default OptionalInt maxProximityRadius()
+    {
+        return OptionalInt.of(32);
+    }
+
+    /**
+     * How often the server checks whether players are near a structure with a proximity radius, in ticks.
+     *
+     * @return The number of ticks between two proximity checks.
+     */
+    default int proximityCheckInterval()
+    {
+        return 10;
+    }
+
+    /**
+     * How long a structure that was opened by proximity stays open after the last player left its radius, in seconds.
+     * <p>
+     * A delay keeps the structure from flapping open and closed while a player stands on the edge of the radius.
+     *
+     * @return The delay before a structure opened by proximity closes again.
+     */
+    default int proximityCloseDelay()
+    {
+        return 3;
+    }
+
+    /**
      * Gets the structure price formula for a specific type of structure.
      *
      * @param type
