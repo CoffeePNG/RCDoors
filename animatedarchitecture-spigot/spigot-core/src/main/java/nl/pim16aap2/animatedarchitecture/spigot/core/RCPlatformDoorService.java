@@ -28,8 +28,8 @@ import java.util.concurrent.CompletionStage;
 /**
  * Adapts RCPlatform's stable door contract to AnimatedArchitecture's native structure API.
  * <p>
- * RCPlatform door identifiers are decimal AnimatedArchitecture structure UIDs. Structure names are deliberately not
- * accepted because they are not unique.
+ * RCPlatform door identifiers may be AnimatedArchitecture structure UIDs or exact structure names. Names are accepted
+ * only when they resolve to exactly one structure; ambiguous names fail with guidance to use the UID instead.
  */
 final class RCPlatformDoorService implements DoorService
 {
@@ -48,24 +48,31 @@ final class RCPlatformDoorService implements DoorService
         if (!active)
             return completed(DoorResult.Status.UNAVAILABLE, DoorState.UNKNOWN, "RCDoors is not active");
 
-        final OptionalLong structureUid = parseStructureUid(request.doorId());
-        if (structureUid.isEmpty())
+        final String identifier = request.doorId().value().trim();
+        if (isNumericIdentifier(identifier) && parseStructureUid(request.doorId()).isEmpty())
             return completed(
                 DoorResult.Status.NOT_FOUND,
                 DoorState.UNKNOWN,
-                "Door IDs must be positive decimal AnimatedArchitecture structure UIDs");
+                "Numeric door IDs must be positive AnimatedArchitecture structure UIDs");
 
-        final long uid = structureUid.getAsLong();
         return platform
             .getStructureRetrieverFactory()
-            .of(uid)
-            .getStructure()
-            .thenCompose(structure -> structure
-                .map(value -> execute(request, value))
-                .orElseGet(() -> completed(
+            .of(identifier)
+            .getStructures()
+            .thenCompose(structures -> {
+                if (structures.isEmpty())
+                    return completed(
                     DoorResult.Status.NOT_FOUND,
                     DoorState.UNKNOWN,
-                    "No structure exists with UID " + uid)))
+                    "No structure exists with ID or exact name '" + identifier + "'");
+                if (structures.size() > 1)
+                    return completed(
+                        DoorResult.Status.FAILED,
+                        DoorState.UNKNOWN,
+                        "Structure name '" + identifier + "' matches " + structures.size()
+                            + " doors; configure the unique numeric UID instead");
+                return execute(request, structures.getFirst());
+            })
             .exceptionally(this::failed);
     }
 
@@ -176,13 +183,26 @@ final class RCPlatformDoorService implements DoorService
     {
         try
         {
-            final long uid = Long.parseLong(doorId.value());
+            final long uid = Long.parseLong(doorId.value().trim());
             return uid > 0 ? OptionalLong.of(uid) : OptionalLong.empty();
         }
         catch (NumberFormatException ignored)
         {
             return OptionalLong.empty();
         }
+    }
+
+    static boolean isNumericIdentifier(String identifier)
+    {
+        if (identifier == null || identifier.isEmpty())
+            return false;
+        int index = identifier.charAt(0) == '+' || identifier.charAt(0) == '-' ? 1 : 0;
+        if (index == identifier.length())
+            return false;
+        for (; index < identifier.length(); ++index)
+            if (!Character.isDigit(identifier.charAt(index)))
+                return false;
+        return true;
     }
 
     static DoorState state(boolean moving, @Nullable Boolean open)

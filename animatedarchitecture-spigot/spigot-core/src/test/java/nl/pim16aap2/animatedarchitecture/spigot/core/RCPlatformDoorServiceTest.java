@@ -27,6 +27,16 @@ class RCPlatformDoorServiceTest
     }
 
     @Test
+    void distinguishesNamesFromNumericIdentifiers()
+    {
+        Assertions.assertTrue(RCPlatformDoorService.isNumericIdentifier("42"));
+        Assertions.assertTrue(RCPlatformDoorService.isNumericIdentifier("-1"));
+        Assertions.assertFalse(RCPlatformDoorService.isNumericIdentifier("front-door"));
+        Assertions.assertFalse(RCPlatformDoorService.isNumericIdentifier("vault 2"));
+        Assertions.assertFalse(RCPlatformDoorService.isNumericIdentifier(""));
+    }
+
+    @Test
     void movingStateTakesPrecedenceOverStoredOpenState()
     {
         Assertions.assertEquals(DoorState.MOVING, RCPlatformDoorService.state(true, true));
