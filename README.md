@@ -77,6 +77,25 @@ Build requirements:
 
 - JDK 25+
 - Maven
+- `net.republicraft.platform:rcplatform-api:1.0.0` in the local Maven repository
+
+`rcplatform-api` is not published to any Maven repository, so it has to be built
+from source before RCDoors can be built. Once per machine, or whenever the
+contract changes:
+
+```shell
+git clone https://github.com/CoffeePNG/RCPlatform
+mvn -f RCPlatform/pom.xml -pl rcplatform-api -am -DskipTests install
+```
+
+Skipping this step fails the build at `spigot-core` with a dependency
+resolution error, and takes every module downstream of it with it.
+
+CI does the same thing in `.github/workflows/build.yml`. Because RCPlatform is a
+private repository, that step needs an `RCPLATFORM_TOKEN` repository secret
+holding a token with read access to it. Pull requests from forks do not receive
+secrets, so they cannot build RCDoors until `rcplatform-api` is published
+somewhere reachable.
 
 From the repository root, create the production package with:
 

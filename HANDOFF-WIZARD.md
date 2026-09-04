@@ -1,9 +1,10 @@
 # RCDoors Wizard Rework: Session Handoff
 
 **Branch:** `claude/new-session-f5iyu0` (continues `claude/last-commits-review-s1469s`)
-**Status:** Core seams landed and tested. Core now passes CI's own static
-analysis. GUI work is blocked on `rcplatform-api` being unpublished, which also
-blocks the packaged jar; see section 1.
+**Status:** Core seams landed and tested. The full reactor builds and tests
+green under CI's own profile, and `RCDoors.jar` is produced. CI itself needs an
+`RCPLATFORM_TOKEN` secret before it can go green; see section 1. GUI work is
+unblocked.
 **Purpose of this doc:** Everything a fresh session needs to pick this up without re-deriving it.
 
 ---
@@ -16,46 +17,34 @@ longer true: all three resolve, every protection hook builds, and the reactor
 now reaches `spigot-core` before it fails. The real blockers are two unrelated
 regressions, both of which predate the wizard work.
 
-### Blocker A: `rcplatform-api` is not published anywhere (open)
+### Blocker A: `rcplatform-api` is not published anywhere (worked around)
 
-`animatedarchitecture-spigot/spigot-core/pom.xml` declares:
+`animatedarchitecture-spigot/spigot-core/pom.xml:34` depends on
+`net.republicraft.platform:rcplatform-api:1.0.0`. No repository in any pom hosts
+it. Maven tries each declared repository in turn and ends on jitpack, which
+answers `401 Unauthorized`. The dependency arrived in `2d7eef4` and has only
+ever resolved from a local `mvn install` of `CoffeePNG/RCPlatform`, which is
+what the maintainer does on their own machine.
 
-```xml
-<groupId>net.republicraft.platform</groupId>
-<artifactId>rcplatform-api</artifactId>
-<version>1.0.0</version>
-<scope>provided</scope>
-```
+That works locally and nowhere else. CI starts from an empty `~/.m2`, so it has
+never had the jar, and `RCDoors.jar` had never been produced by a CI run.
 
-No repository in any pom hosts it. Maven tries each declared repository in turn
-and ends on jitpack, which answers `401 Unauthorized`. The dependency was added
-in `2d7eef4` ("feat: publish RCPlatform door service") and has only ever
-resolved from a local `mvn install` on the author's machine.
+The build now installs it from source, exactly as a developer would:
+`.github/workflows/build.yml` checks out `CoffeePNG/RCPlatform` and runs
+`mvn -pl rcplatform-api -am -DskipTests install` before building RCDoors.
 
-Consequences:
+Two things this does not solve:
 
-- `spigot-core` and everything downstream of it (`structures`, all nine
-  structure types, `spigot-packager`, both integration-test modules) cannot be
-  built by anyone else, CI included.
-- `RCDoors.jar` has never been produced by CI. Every run since the workflow was
-  added has failed.
-- **The GUI wizard lives in `spigot-core`, so it cannot be compiled or shipped
-  until this is resolved.**
-
-Options, in order of preference:
-
-1. Publish `rcplatform-api` to a repository the build can reach, add it to
-   `spigot-core/pom.xml`, and give CI credentials via a `settings.xml` and
-   repository secrets. Correct long-term answer.
-2. Vendor a compile-only stub of the ~14 API types under a `provided`-scope
-   module. Unblocks everyone with no credentials, but the signatures would be
-   reconstructed from usage, so a mismatch with the real jar surfaces as a
-   runtime `NoSuchMethodError` rather than a compile error.
-3. Bind the door service reflectively and drop the compile-time dependency.
-   Removes the blocker at the cost of type safety.
-
-This needs a decision from the repo owner. It is not something a build fix can
-route around.
+- RCPlatform is private, so the checkout needs an `RCPLATFORM_TOKEN` repository
+  secret with read access. **CI stays red until that secret exists.**
+- Fork pull requests do not receive secrets, so outside contributors still
+  cannot build a repository that is public and GPL-3.0. Closing that gap means
+  publishing `rcplatform-api` somewhere with anonymous read (a public API repo
+  via JitPack is the usual answer; GitHub Packages will not do it, since its
+  Maven registry requires auth even for public packages).
+- `RCPLATFORM_REF` pins the checkout to `main`. RCPlatform has no tags, so an
+  RCDoors build currently tracks whatever is on RCPlatform's default branch.
+  Tag RCPlatform and pin the tag.
 
 ### Blocker B: static analysis on `Creator.java` (fixed)
 
@@ -80,11 +69,12 @@ positive.
 ```bash
 export JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64
 
-# Blocker B: passes on this branch.
-mvn -B -P=errorprone -pl animatedarchitecture-core -am test pmd:check
+# Once per machine: build the RCPlatform contract RCDoors compiles against.
+git clone https://github.com/CoffeePNG/RCPlatform /home/user/rcplatform
+mvn -B -f /home/user/rcplatform/pom.xml -pl rcplatform-api -am -DskipTests install
 
-# Blocker A: still fails at spigot-core with the 401 above.
-mvn -B -pl animatedarchitecture-spigot/spigot-core -am -DskipTests compile
+# Then the whole reactor, exactly as CI runs it.
+mvn -B -P=errorprone test install pmd:check
 ```
 
 Always run the first command with `-P=errorprone`. Without it the build is not
@@ -104,28 +94,29 @@ export JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64
 
 Available JDKs: `/usr/lib/jvm/java-21-openjdk-amd64`, `/usr/lib/jvm/java-25-openjdk-amd64`.
 
-### Open question: is JDK 25 correct for production?
+### JDK 25 is correct for production (resolved)
 
-This is a deployment risk, not a build issue. Paper 1.21.4 targets Java 21, and
-commit `a620d38` moved this fork to Paper 26.2. If the RCHeists production host
-runs anything below JDK 25, the plugin will throw
-`UnsupportedClassVersionError` at server startup. That is a hard load failure,
-not a degraded mode.
-
-**Action required from the repo owner:** confirm the production JDK version.
-If it is 21, lowering `maven.compiler.release` is a one-line change that should
-happen before any feature work ships.
+This was previously flagged as an open deployment risk. The repo owner has
+confirmed the production host runs JDK 25, so `maven.compiler.release=25` stays
+as it is. RCPlatform targets 25 as well, so the two are consistent.
 
 ### Test baseline
 
-- `animatedarchitecture-core`: **402 tests, all passing** with `-P=errorprone`,
-  plus a clean `pmd:check`.
-- `animatedarchitecture-testing`, `animatedarchitecture-integration-test`,
-  and everything in the Spigot layer: **never executed**, because they are
-  downstream of `spigot-core`, which is still blocked by Blocker A.
+With `rcplatform-api` installed locally, the **entire reactor builds and
+tests green** under CI's own profile:
 
-Do not describe the suite as fully green. Core is green. The Spigot layer is
-unverified and has never been built by CI.
+```
+mvn -B -P=errorprone test install pmd:check   # BUILD SUCCESS
+```
+
+Every module succeeds, `animatedarchitecture-core` runs 402 tests,
+`animatedarchitecture-integration-test` runs 19, and
+`spigot-packager/target/RCDoors.jar` is produced. This is the first time the
+full build has been verified end to end.
+
+The `[ERROR]` lines about `systemPath` on `MassiveCore`, `Factions`, `dynmap-3`
+and friends come from a transitive third-party pom in the RedProtect hook's
+dependency tree. They are non-fatal and unrelated to this repo.
 
 ---
 

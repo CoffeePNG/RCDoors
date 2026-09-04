@@ -14,6 +14,9 @@ on:
 
 env:
   MAVEN_OPTS: "-Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss,SSS"
+  # RCPlatform is not published to any Maven repository, so the API is built from source here. Bump this once
+  # RCPlatform starts tagging releases, so that a change on its default branch cannot alter an RCDoors build.
+  RCPLATFORM_REF: main
 
 jobs:
   build:
@@ -35,6 +38,20 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+
+      # spigot-core compiles against net.republicraft.platform:rcplatform-api, which is not published anywhere.
+      # A local `mvn install` of RCPlatform is what makes an RCDoors build work on a developer machine, so the
+      # same install runs here. Without it every module from spigot-core onwards fails to resolve.
+      - name: Check out RCPlatform
+        uses: actions/checkout@v4.2.2
+        with:
+          repository: CoffeePNG/RCPlatform
+          ref: ${{ env.RCPLATFORM_REF }}
+          token: ${{ secrets.RCPLATFORM_TOKEN }}
+          path: .rcplatform
+
+      - name: Install the RCPlatform API into the local Maven repository
+        run: mvn --batch-mode -f .rcplatform/pom.xml -pl rcplatform-api -am -DskipTests install
 
       - name: Build the project and run static analysis tools.
         run: mvn --batch-mode -P=errorprone clean test install checkstyle:checkstyle pmd:check -Dactions.run.id=$GITHUB_RUN_ID -Dactions.run.number=$GITHUB_RUN_NUMBER

@@ -49,3 +49,6 @@ ignoredFiles
 *.sh
 
 **/delombok/*
+
+# Local checkout of RCPlatform, used to build the unpublished rcplatform-api.
+.rcplatform/
