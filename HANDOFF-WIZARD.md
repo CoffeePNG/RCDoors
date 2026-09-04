@@ -1,67 +1,94 @@
 # RCDoors Wizard Rework: Session Handoff
 
-**Branch:** `claude/last-commits-review-s1469s`
-**Last verified commit:** `f71396e` (refactor: expose creator step state for alternative front-ends)
-**Status:** Core seams landed and tested. GUI work blocked on network egress.
+**Branch:** `claude/new-session-f5iyu0` (continues `claude/last-commits-review-s1469s`)
+**Status:** Core seams landed and tested. Core now passes CI's own static
+analysis. GUI work is blocked on `rcplatform-api` being unpublished, which also
+blocks the packaged jar; see section 1.
 **Purpose of this doc:** Everything a fresh session needs to pick this up without re-deriving it.
 
 ---
 
-## 1. Why a new session is needed
+## 1. What is actually blocking the build
 
-The GUI wizard has to live in the `spigot-core` module. That module cannot be
-compiled in the current environment because three Maven artifacts fail to
-resolve through the sandbox proxy.
+**Superseded.** The earlier diagnosis in this section blamed a sandbox egress
+allowlist for `worldedit-core`, `worldedit-bukkit` and `paperlib`. That is no
+longer true: all three resolve, every protection hook builds, and the reactor
+now reaches `spigot-core` before it fails. The real blockers are two unrelated
+regressions, both of which predate the wizard work.
 
-| Artifact | Version | Needed by |
+### Blocker A: `rcplatform-api` is not published anywhere (open)
+
+`animatedarchitecture-spigot/spigot-core/pom.xml` declares:
+
+```xml
+<groupId>net.republicraft.platform</groupId>
+<artifactId>rcplatform-api</artifactId>
+<version>1.0.0</version>
+<scope>provided</scope>
+```
+
+No repository in any pom hosts it. Maven tries each declared repository in turn
+and ends on jitpack, which answers `401 Unauthorized`. The dependency was added
+in `2d7eef4` ("feat: publish RCPlatform door service") and has only ever
+resolved from a local `mvn install` on the author's machine.
+
+Consequences:
+
+- `spigot-core` and everything downstream of it (`structures`, all nine
+  structure types, `spigot-packager`, both integration-test modules) cannot be
+  built by anyone else, CI included.
+- `RCDoors.jar` has never been produced by CI. Every run since the workflow was
+  added has failed.
+- **The GUI wizard lives in `spigot-core`, so it cannot be compiled or shipped
+  until this is resolved.**
+
+Options, in order of preference:
+
+1. Publish `rcplatform-api` to a repository the build can reach, add it to
+   `spigot-core/pom.xml`, and give CI credentials via a `settings.xml` and
+   repository secrets. Correct long-term answer.
+2. Vendor a compile-only stub of the ~14 API types under a `provided`-scope
+   module. Unblocks everyone with no credentials, but the signatures would be
+   reconstructed from usage, so a mismatch with the real jar surfaces as a
+   runtime `NoSuchMethodError` rather than a compile error.
+3. Bind the door service reflectively and drop the compile-time dependency.
+   Removes the blocker at the cost of type safety.
+
+This needs a decision from the repo owner. It is not something a build fix can
+route around.
+
+### Blocker B: static analysis on `Creator.java` (fixed)
+
+CI runs `mvn -P=errorprone clean test install checkstyle:checkstyle pmd:check`.
+A plain `mvn compile` does not enable that profile, which is why the failure was
+invisible locally. Under the profile, `animatedarchitecture-core` failed to
+compile with three errors introduced by `bdecdfd` (the block-selection wand):
+
+| Line | Check | Cause |
 |---|---|---|
-| `com.sk89q.worldedit:worldedit-core` | 7.4.5 | `hook-plotsquared-6`, `hook-world-guard-7` |
-| `com.sk89q.worldedit:worldedit-bukkit` | 7.4.5 | `hook-plotsquared-6`, `hook-world-guard-7` |
-| `io.papermc:paperlib` | 1.0.8 | `hook-plotsquared-6` |
+| 888 | NullAway | `setProperty` took a `@NonNull` value, but the full-cuboid case passes null to mean "store no mask" |
+| 955, 957 | GuardedBy | `sendSelectionStatus()` read `blockSelection` from lazily evaluated text arguments, which are rendered after the method releases the lock |
 
-The proxy returns `403 Forbidden` for the repositories that host them. Because
-`hook-plotsquared-6` sits early in the reactor, its failure marks every
-subsequent module `SKIPPED`, including `spigot-core`, `structures`, all nine
-structure types, and both integration test modules.
+Both are fixed on this branch. `setProperty` now accepts `@Nullable T`, which
+`PropertyContainer.setPropertyValue` already supported, and
+`sendSelectionStatus()` reads the selection eagerly and lets the text arguments
+capture the results. The GuardedBy pair was a genuine race, not a false
+positive.
 
-Maven Central resolves fine (~103 MB downloaded successfully), so this is an
-allowlist problem, not a general network failure.
-
-### Egress hosts to allow
-
-Declared directly in this repo's poms:
-
-```
-https://maven.enginehub.org/repo/
-https://oss.sonatype.org/content/repositories/snapshots
-https://hub.spigotmc.org/nexus/content/repositories/snapshots/
-https://gitlab.com/api/v4/projects/42502896/packages/maven
-https://jitpack.io
-https://repo.minebench.de/
-https://repo.maven.apache.org/maven2
-```
-
-Pulled in transitively by dependency parent poms (appeared in resolution
-errors as repository id `s01-sonatype`):
-
-```
-https://s01.oss.sonatype.org/content/groups/public/
-```
-
-`maven.enginehub.org` and `s01.oss.sonatype.org` are the two that actually
-blocked the build. The rest are listed so the allowlist is complete rather
-than minimal, since Maven consults every declared repository.
-
-### Verifying the unblock
-
-Run this first in the new session. If it passes, the blocker is gone:
+### Verifying
 
 ```bash
 export JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64
+
+# Blocker B: passes on this branch.
+mvn -B -P=errorprone -pl animatedarchitecture-core -am test pmd:check
+
+# Blocker A: still fails at spigot-core with the 401 above.
 mvn -B -pl animatedarchitecture-spigot/spigot-core -am -DskipTests compile
 ```
 
----
+Always run the first command with `-P=errorprone`. Without it the build is not
+running what CI runs, and this section's mistake repeats.
 
 ## 2. Environment notes
 
@@ -91,13 +118,14 @@ happen before any feature work ships.
 
 ### Test baseline
 
-- `animatedarchitecture-core`: **402 tests, all passing** on `f71396e`.
+- `animatedarchitecture-core`: **402 tests, all passing** with `-P=errorprone`,
+  plus a clean `pmd:check`.
 - `animatedarchitecture-testing`, `animatedarchitecture-integration-test`,
   and everything in the Spigot layer: **never executed**, because they are
-  downstream of the skipped modules.
+  downstream of `spigot-core`, which is still blocked by Blocker A.
 
 Do not describe the suite as fully green. Core is green. The Spigot layer is
-unverified in this environment.
+unverified and has never been built by CI.
 
 ---
 

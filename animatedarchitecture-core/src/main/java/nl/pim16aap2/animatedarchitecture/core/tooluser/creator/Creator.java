@@ -407,13 +407,13 @@ public abstract class Creator extends ToolUser
      * @param property
      *     The property to set.
      * @param value
-     *     The value to set the property to.
+     *     The value to set the property to, or null to leave the property unset.
      * @param <T>
      *     The type of the property.
      * @throws IllegalArgumentException
      *     If the property is not valid for the structure type this property container was created for.
      */
-    protected synchronized final <T> void setProperty(Property<T> property, T value)
+    protected synchronized final <T> void setProperty(Property<T> property, @Nullable T value)
     {
         propertyContainer.setPropertyValue(property, value);
     }
@@ -962,15 +962,19 @@ public abstract class Creator extends ToolUser
      */
     private synchronized void sendSelectionStatus()
     {
+        // The text arguments are evaluated lazily, when the message is rendered, which may happen after this method
+        // has released the lock. Read the selection here and let the arguments capture the results.
+        final int selected = blockSelection.size();
+        final int total = blockSelection
+            .getBoundingCuboid()
+            .map(Cuboid::getVolume)
+            .orElseGet(() -> Optional.ofNullable(getCuboid()).map(Cuboid::getVolume).orElse(0));
+
         getPlayer().sendMessage(textFactory.newText().append(
             localizer.getMessage("creator.base.select_blocks.status"),
             TextType.INFO,
-            arg -> arg.highlight(blockSelection.size()),
-            arg -> arg.highlight(
-                blockSelection
-                    .getBoundingCuboid()
-                    .map(Cuboid::getVolume)
-                    .orElseGet(() -> Optional.ofNullable(getCuboid()).map(Cuboid::getVolume).orElse(0))))
+            arg -> arg.highlight(selected),
+            arg -> arg.highlight(total))
         );
     }
 
