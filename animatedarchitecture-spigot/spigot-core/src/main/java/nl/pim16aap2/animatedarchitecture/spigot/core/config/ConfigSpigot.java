@@ -100,6 +100,7 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
     private OptionalInt maxStructureSize = OptionalInt.empty();
     private OptionalInt maxPowerBlockDistance = OptionalInt.empty();
     private boolean enableProximity;
+    private boolean enableCreatorWizard;
     private OptionalInt maxProximityRadius = OptionalInt.empty();
     private int proximityCheckInterval;
     private int proximityCloseDelay;
@@ -192,6 +193,14 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
             # Allow structures to be opened by players walking up to them.
             # Each structure has its own radius, which its owner sets with the /rcdoors setproximity command.
             # When this is disabled, those radii are ignored and no structure opens for nearby players.
+            """;
+
+        final String enableCreatorWizardComment = """
+            # Open an inventory wizard when a player starts creating a structure.
+            # The wizard shows every step of the process at once, so a player can jump back to an earlier
+            # answer instead of restarting. It drives the same procedure as the chat flow, so both produce
+            # identical structures.
+            # This is off by default. Turn it on once the wizard has been tried on this server.
             """;
 
         final String maxProximityRadiusComment = """
@@ -450,6 +459,13 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
             maxPowerBlockDistance > 0 ? OptionalInt.of(maxPowerBlockDistance) : OptionalInt.empty();
 
         enableProximity = addNewConfigEntry(config, "allowProximity", true, enableProximityComment);
+
+        enableCreatorWizard = addNewConfigEntry(
+            config,
+            "allowCreatorWizard",
+            false,
+            enableCreatorWizardComment
+        );
 
         final int maxProximityRadius = addNewConfigEntry(
             config,
@@ -888,6 +904,12 @@ public final class ConfigSpigot implements IConfig, IDebuggable, IBlockAnalyzerC
     public boolean isProximityEnabled()
     {
         return enableProximity;
+    }
+
+    @Override
+    public boolean isCreatorWizardEnabled()
+    {
+        return enableCreatorWizard;
     }
 
     @Override

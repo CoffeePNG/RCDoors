@@ -648,6 +648,28 @@ public abstract class ToolUser
     }
 
     /**
+     * The total number of steps in the {@link #procedure}.
+     *
+     * @return The number of steps in this process.
+     */
+    public final int getStepCount()
+    {
+        assertInitialized();
+        return procedure.getStepCount();
+    }
+
+    /**
+     * The 1-based position of the current step in the {@link #procedure}.
+     *
+     * @return The number of the step this process is currently at.
+     */
+    public final int getCurrentStepNumber()
+    {
+        assertInitialized();
+        return procedure.getCurrentStepNumber();
+    }
+
+    /**
      * Checks if a player is allowed to break the block in a given location.
      * <p>
      * If the player is not allowed to break blocks in the location, a message will be sent to them (provided the name
@@ -751,10 +773,13 @@ public abstract class ToolUser
 
     /**
      * Accessor for {@link Procedure#getAllSteps()}.
+     * <p>
+     * This is public so that a front-end showing the whole procedure at once, rather than one step at a time, can
+     * render every step itself.
      *
      * @return All the steps in the procedure including any that may have been completed/skipped already.
      */
-    protected final List<Step> getAllSteps()
+    public final List<Step> getAllSteps()
     {
         assertInitialized();
         return procedure.getAllSteps();

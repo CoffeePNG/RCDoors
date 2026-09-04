@@ -92,6 +92,20 @@ public interface IConfig extends IRestartable
     boolean loadChunksForToggle();
 
     /**
+     * Whether the inventory wizard is used to guide players through structure creation.
+     * <p>
+     * When this is disabled, creation runs entirely through the chat-driven flow, exactly as it did before the wizard
+     * existed. The wizard is a second front-end over the same procedure, so nothing about the resulting structure
+     * depends on which one was used.
+     *
+     * @return True if the creation wizard should be opened when a creation process starts.
+     */
+    default boolean isCreatorWizardEnabled()
+    {
+        return false;
+    }
+
+    /**
      * Whether structures may be opened by players walking up to them.
      * <p>
      * When this is disabled, the proximity radius of individual structures is ignored.

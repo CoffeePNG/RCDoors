@@ -10,13 +10,17 @@ import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
 import lombok.Getter;
 import lombok.ToString;
+import nl.pim16aap2.animatedarchitecture.core.api.IConfig;
+import nl.pim16aap2.animatedarchitecture.core.api.IExecutor;
 import nl.pim16aap2.animatedarchitecture.core.api.IPermissionsManager;
 import nl.pim16aap2.animatedarchitecture.core.api.factories.ITextFactory;
 import nl.pim16aap2.animatedarchitecture.core.commands.CommandFactory;
 import nl.pim16aap2.animatedarchitecture.core.localization.ILocalizer;
 import nl.pim16aap2.animatedarchitecture.core.managers.StructureTypeManager;
+import nl.pim16aap2.animatedarchitecture.core.managers.ToolUserManager;
 import nl.pim16aap2.animatedarchitecture.core.structures.StructureType;
 import nl.pim16aap2.animatedarchitecture.core.text.TextArgument;
+import nl.pim16aap2.animatedarchitecture.core.tooluser.creator.Creator;
 import nl.pim16aap2.animatedarchitecture.core.util.FutureUtil;
 import nl.pim16aap2.animatedarchitecture.spigot.core.AnimatedArchitecturePlugin;
 import nl.pim16aap2.animatedarchitecture.spigot.util.implementations.PlayerSpigot;
@@ -40,6 +44,10 @@ class CreateStructureGui implements IGuiPage
     private final ILocalizer localizer;
 
     private final CommandFactory commandFactory;
+    private final IConfig config;
+    private final IExecutor executor;
+    private final ToolUserManager toolUserManager;
+    private final WizardGui.IFactory wizardGuiFactory;
 
     @Getter
     @ToString.Include
@@ -52,6 +60,10 @@ class CreateStructureGui implements IGuiPage
         IPermissionsManager permissionsManager,
         ILocalizer localizer,
         CommandFactory commandFactory,
+        IConfig config,
+        IExecutor executor,
+        ToolUserManager toolUserManager,
+        WizardGui.IFactory wizardGuiFactory,
         @Assisted PlayerSpigot inventoryHolder)
     {
         this.animatedArchitecturePlugin = animatedArchitecturePlugin;
@@ -59,6 +71,10 @@ class CreateStructureGui implements IGuiPage
         this.permissionsManager = permissionsManager;
         this.localizer = localizer;
         this.commandFactory = commandFactory;
+        this.config = config;
+        this.executor = executor;
+        this.toolUserManager = toolUserManager;
+        this.wizardGuiFactory = wizardGuiFactory;
         this.inventoryHolder = inventoryHolder;
 
         this.inventoryGui = createGui();
@@ -115,11 +131,7 @@ class CreateStructureGui implements IGuiPage
                 new ItemStack(Material.WRITABLE_BOOK),
                 click ->
                 {
-                    commandFactory
-                        .newNewStructure(inventoryHolder, type)
-                        .run()
-                        .exceptionally(FutureUtil::exceptionally);
-                    GuiUtil.closeAllGuis(inventoryHolder);
+                    startCreationProcess(type);
                     return true;
                 },
                 ITextFactory.getSimpleTextFactory().newText()
@@ -132,6 +144,33 @@ class CreateStructureGui implements IGuiPage
         }
         group.setFiller(FILLER);
         gui.addElement(group);
+    }
+
+    private void startCreationProcess(StructureType type)
+    {
+        commandFactory
+            .newNewStructure(inventoryHolder, type)
+            .run()
+            .thenRun(this::openWizardIfEnabled)
+            .exceptionally(FutureUtil::exceptionally);
+        GuiUtil.closeAllGuis(inventoryHolder);
+    }
+
+    /**
+     * Opens the inventory wizard over the process that was just started, if this server uses it.
+     * <p>
+     * When the wizard is disabled, the process is left to the chat-driven flow, which is what it has always used.
+     */
+    private void openWizardIfEnabled()
+    {
+        if (!config.isCreatorWizardEnabled())
+            return;
+
+        executor.runOnMainThread(() -> toolUserManager
+            .getToolUser(inventoryHolder.getUUID())
+            .filter(Creator.class::isInstance)
+            .map(Creator.class::cast)
+            .ifPresent(creator -> wizardGuiFactory.newWizardGui(creator, inventoryHolder)));
     }
 
     private void showGUI()
