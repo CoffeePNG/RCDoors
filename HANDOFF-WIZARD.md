@@ -207,52 +207,81 @@ front-end can never break structure creation.
 
 ---
 
-## 5. Next: the GUI wizard
+## 5. The GUI wizard (built, unproven)
 
-### Design
+`WizardGui` lives in
+`animatedarchitecture-spigot/spigot-core/src/main/java/nl/pim16aap2/animatedarchitecture/spigot/core/gui/`
+and follows the existing `CreateStructureGui` / `DeleteGui` conventions:
+`IGuiPage`, `InventoryGui` from `de.themoep.inventorygui`, Dagger
+`@AssistedInject` plus an `@AssistedFactory IFactory`. No module registration
+was needed; Dagger picks the assisted factory up where it is injected.
 
-`WizardGui` in
-`animatedarchitecture-spigot/spigot-core/src/main/java/nl/pim16aap2/animatedarchitecture/spigot/core/gui/`,
-implementing `IGuiPage`, following the existing `MainGui` / `CreateStructureGui`
-conventions (`InventoryGui` from `de.themoep.inventorygui`, Dagger
-`@AssistedInject` plus an `@AssistedFactory IFactory`).
+### How it behaves
 
-It is a **hub, not a replacement**. Because in-world steps need the inventory
-closed, the loop is:
+It is a hub, not a replacement. An inventory cannot receive an in-world click,
+and most steps need one, so the loop is:
 
-1. Wizard shows all steps as slots, with name, current value, and completion state.
-2. Player clicks a slot. Wizard calls `creator.update(stepName, null)` and closes.
-3. Player performs the in-world action (click a block, select a region).
-4. `IProcedureListener.onStepChanged` fires. Wizard reopens, refreshed.
+1. The wizard shows every step that reports a property as a slot: what it sets,
+   what it is set to, and whether it can be changed.
+2. The player clicks a slot. The wizard closes and calls
+   `creator.update(stepName, null)`.
+3. The player performs the in-world action.
+4. `IProcedureListener.onStepChanged` fires and the wizard reopens, refreshed.
 
-Bracket the whole interaction with `beginEditingSession()` on open and
-`endEditingSession()` on close.
+The wizard only reopens after a hand-off it started itself, so it does not
+flicker in and out while a player works through the procedure in order. The
+whole interaction is bracketed by `beginEditingSession()` and
+`endEditingSession()`, which is what allows more than one out-of-order update.
 
-### Implementation checklist
+### What is done
 
-- [ ] `WizardGui` class plus `IFactory`, registered in `GuiFactorySpigotModule`
-- [ ] Slot rendering driven by `Step.reportsProperty()` / `getPropertyName()` / `getPropertyValue()`
-- [ ] Distinct materials for completed / current / pending / non-updatable steps
-- [ ] Click handler calling `Creator.update()`, guarded by `canUpdate()`
-- [ ] `beginEditingSession()` on open, `endEditingSession()` on close action
-- [ ] Register / unregister `IProcedureListener`, mirroring how
-      `GuiStructureDeletionManager` handles listener lifecycle in `MainGui`
-- [ ] Anvil GUI for the name step, replacing the `/rcdoors setname` chat command
-- [ ] Confirm and cancel controls, reusing the existing `Confirm` / `Cancel` commands
-- [ ] Entry point: open the wizard when a creation process starts, from
-      `CreateStructureGui`'s click handler
-- [ ] Localization keys in `SpigotCore.properties`
-- [ ] **Config flag defaulting to off**, so the chat flow stays the default
-      path until the GUI is proven on the heist server
+- [x] `WizardGui` plus `IFactory`
+- [x] Slot rendering driven by `Step.reportsProperty()` / `getPropertyName()` /
+      `getPropertyValue()`
+- [x] Distinct materials for current / completed / pending / non-updatable
+- [x] Click handler calling `Creator.update()`, guarded by `canUpdate()` and
+      `Step.isUpdatable()`
+- [x] `beginEditingSession()` on open, `endEditingSession()` on tear-down
+- [x] `IProcedureListener` registered on open, removed on tear-down
+- [x] Confirm and cancel, doing what the `Confirm` and `Cancel` commands do
+- [x] Entry point from `CreateStructureGui`'s click handler
+- [x] Localization keys in `SpigotCore.properties`
+- [x] `allowCreatorWizard` config flag, **defaulting to off**
+- [ ] Anvil GUI for the name step. Not done: the name step still hands off to
+      the chat `/rcdoors setname` flow, which works but is the weakest part of
+      the loop.
+- [ ] **Nobody has opened this on a real server.** It compiles and the whole
+      suite is green, but there is no test coverage of the gui itself and no
+      play-testing. Treat it as unproven.
+
+### Which steps appear
+
+Only steps where `reportsProperty()` is true. The rest are either internal
+(`REVIEW_RESULT`, `CONFIRM_STRUCTURE_PRICE`, `COMPLETE_CREATION_PROCESS`) or
+already covered by another step: `SET_FIRST_POS` has no value of its own,
+because `SET_SECOND_POS` reports the whole cuboid. Rendering them produced
+slots with raw internal names stuck on "not set yet" forever.
+
+Of the seven that do appear, `SET_SECOND_POS` and `SELECT_BLOCKS` are not
+marked `updatable`, so they show as locked. Revisiting them means restarting,
+which is the same constraint the chat flow has.
 
 ### Threading
 
-`InventoryGui` calls must happen on the main server thread. `GuiFactory`
-already demonstrates the pattern with `executor.runOnMainThread(...)`.
-`IProcedureListener` callbacks fire from whatever thread advanced the
-procedure, which for async steps is not the main thread. **Every listener
-callback must hop to the main thread before touching the GUI.** This is the
-most likely source of subtle bugs in this work.
+`InventoryGui` must only be touched from the main server thread, while
+`IProcedureListener` fires from whichever thread advanced the procedure. Every
+callback goes through `executor.scheduleOnMainThread`, never `runOnMainThread`:
+the latter runs inline when it is already on the main thread, which would let a
+reopen happen while Bukkit is still inside the close event of the gui the
+hand-off just closed.
+
+### Known rough edge
+
+`Creator.update(stepName, stepValue)` ignores `stepValue` entirely. It inserts
+the named step and prepares it; the value is only ever used in a log message.
+The same is true of `UpdateCreator`'s `stepValue` parameter. Passing null is
+therefore correct, but the parameter is dead weight in both signatures and
+should either be honoured or removed.
 
 ---
 
