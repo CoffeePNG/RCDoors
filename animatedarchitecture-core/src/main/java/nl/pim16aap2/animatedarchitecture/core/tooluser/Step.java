@@ -138,6 +138,53 @@ public final class Step
     }
 
     /**
+     * The localized name of the property this step sets, if this step reports a property at all.
+     * <p>
+     * Unlike {@link #getPropertyText(ITextFactory)}, this exposes the raw name without committing to any particular
+     * presentation. This allows alternative front-ends (e.g. an inventory-based wizard) to render this step themselves.
+     *
+     * @return The localized property name, or null if this step does not report a property.
+     */
+    public @Nullable String getPropertyName()
+    {
+        return propertyName;
+    }
+
+    /**
+     * The current value of the property this step sets, if this step reports a property at all.
+     * <p>
+     * See {@link #getPropertyName()}.
+     *
+     * @return The current property value, or null if this step does not report a property or the value is not set yet.
+     */
+    public @Nullable Object getPropertyValue()
+    {
+        return propertyValueSupplier == null ? null : propertyValueSupplier.get();
+    }
+
+    /**
+     * Whether this step may be revisited after it has been completed.
+     * <p>
+     * See {@link #updatable}.
+     *
+     * @return True if this step can be updated after it has been set.
+     */
+    public boolean isUpdatable()
+    {
+        return updatable;
+    }
+
+    /**
+     * Whether this step reports a property, and can therefore be rendered as a labelled value.
+     *
+     * @return True if both a property name and a value supplier are set for this step.
+     */
+    public boolean reportsProperty()
+    {
+        return propertyName != null && propertyValueSupplier != null;
+    }
+
+    /**
      * Creates the property information for this step using {@link #propertyName} and {@link #propertyValueSupplier}.
      * <p>
      * If either the property name or the associated value supplier is null, this method will return an empty optional.
