@@ -183,6 +183,16 @@ public abstract class Creator extends ToolUser
     private boolean processIsUpdatable = false;
 
     /**
+     * The number of currently open editing sessions.
+     * <p>
+     * See {@link #beginEditingSession()}. While this is greater than zero, {@link #processIsUpdatable} is kept true so
+     * that a front-end showing every step at once can issue several {@link #update(String, Object)} calls in a row.
+     */
+    @ToString.Include
+    @GuardedBy("this")
+    private int editingSessionDepth = 0;
+
+    /**
      * Factory for the {@link Step} that provides the name.
      */
     protected final Step.Factory factoryProvideName;
@@ -469,7 +479,10 @@ public abstract class Creator extends ToolUser
             throw new IllegalStateException(
                 "Trying to update step " + stepName + " with value " + stepValue +
                     " while the process is not in an updatable state!");
-        processIsUpdatable = false;
+
+        // An open editing session keeps the process updatable across multiple calls; without one, the original
+        // single-shot behaviour of the chat-driven review step applies.
+        processIsUpdatable = editingSessionDepth > 0;
 
         return runWithLock(() ->
         {
@@ -1496,6 +1509,48 @@ public abstract class Creator extends ToolUser
     protected final synchronized boolean isProcessIsUpdatable()
     {
         return this.processIsUpdatable;
+    }
+
+    /**
+     * Whether this process currently accepts out-of-order updates via {@link #update(String, Object)}.
+     *
+     * @return True if {@link #update(String, Object)} may be called right now.
+     */
+    public final synchronized boolean canUpdate()
+    {
+        return this.processIsUpdatable;
+    }
+
+    /**
+     * Opens an editing session, allowing out-of-order updates until {@link #endEditingSession()} is called.
+     * <p>
+     * In the chat-driven flow, out-of-order updates are only permitted from the review step, and only once: the flag is
+     * set in {@link #prepareReviewResult()} and cleared again by the first {@link #update(String, Object)} call. A
+     * front-end that shows every step at once (such as an inventory wizard) needs updates to stay available for as long
+     * as it is on screen, so it brackets its interaction with this method and {@link #endEditingSession()}.
+     * <p>
+     * This does not bypass the per-step locking in {@link #update(String, Object)}; it only keeps the process marked as
+     * updatable between calls.
+     */
+    public final synchronized void beginEditingSession()
+    {
+        this.editingSessionDepth++;
+        this.processIsUpdatable = true;
+    }
+
+    /**
+     * Closes an editing session opened by {@link #beginEditingSession()}.
+     * <p>
+     * Sessions are counted, so nested calls are safe; the process only stops accepting out-of-order updates once every
+     * opened session has been closed.
+     */
+    public final synchronized void endEditingSession()
+    {
+        if (this.editingSessionDepth > 0)
+            this.editingSessionDepth--;
+
+        if (this.editingSessionDepth == 0)
+            this.processIsUpdatable = false;
     }
 
     /**

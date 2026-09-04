@@ -33,6 +33,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 /**
@@ -104,6 +105,103 @@ public abstract class ToolUser
      */
     @GuardedBy("this")
     private boolean playerHasTool = false;
+
+    /**
+     * Listeners that are notified whenever this process advances to a new step or shuts down.
+     * <p>
+     * This exists so that alternative front-ends (such as an inventory-based wizard) can re-render themselves when the
+     * procedure moves on, instead of polling for changes. The chat-driven flow does not use this.
+     */
+    private final List<IProcedureListener> procedureListeners = new CopyOnWriteArrayList<>();
+
+    /**
+     * Registers a listener that is notified when this process advances to a new step or shuts down.
+     * <p>
+     * Listeners are held for the lifetime of this process; they are dropped when it is cleaned up. A front-end that
+     * closes before the process ends should unregister itself via {@link #removeProcedureListener(IProcedureListener)}.
+     *
+     * @param listener
+     *     The listener to register.
+     */
+    public final void addProcedureListener(IProcedureListener listener)
+    {
+        procedureListeners.add(listener);
+    }
+
+    /**
+     * Unregisters a listener previously registered via {@link #addProcedureListener(IProcedureListener)}.
+     *
+     * @param listener
+     *     The listener to remove.
+     */
+    public final void removeProcedureListener(IProcedureListener listener)
+    {
+        procedureListeners.remove(listener);
+    }
+
+    /**
+     * Notifies all registered listeners that the procedure has advanced.
+     * <p>
+     * A misbehaving listener must not be able to break the creation process itself, so exceptions thrown by a listener
+     * are logged and swallowed rather than propagated.
+     */
+    private void notifyStepChanged()
+    {
+        for (final IProcedureListener listener : procedureListeners)
+        {
+            try
+            {
+                listener.onStepChanged(this);
+            }
+            catch (Exception e)
+            {
+                log.atSevere().withCause(e).log("Procedure listener '%s' threw an exception.", listener);
+            }
+        }
+    }
+
+    /**
+     * Notifies all registered listeners that the procedure has shut down, then drops them.
+     * <p>
+     * See {@link #notifyStepChanged()} for the exception-handling rationale.
+     */
+    private void notifyShutDown()
+    {
+        for (final IProcedureListener listener : procedureListeners)
+        {
+            try
+            {
+                listener.onProcedureShutDown(this);
+            }
+            catch (Exception e)
+            {
+                log.atSevere().withCause(e).log("Procedure listener '%s' threw an exception.", listener);
+            }
+        }
+        procedureListeners.clear();
+    }
+
+    /**
+     * Listener for changes in a {@link ToolUser}'s {@link Procedure}.
+     */
+    public interface IProcedureListener
+    {
+        /**
+         * Called after the procedure has moved to a new step and that step has been prepared.
+         *
+         * @param toolUser
+         *     The tool user whose procedure advanced.
+         */
+        void onStepChanged(ToolUser toolUser);
+
+        /**
+         * Called when the procedure is cleaned up, whether it completed or was aborted.
+         *
+         * @param toolUser
+         *     The tool user whose procedure ended.
+         */
+        void onProcedureShutDown(ToolUser toolUser);
+    }
 
     /**
      * Creates a new {@link ToolUser} for the given player.
@@ -192,6 +290,7 @@ public abstract class ToolUser
         removeTool();
         active = false;
         toolUserManager.abortToolUser(this);
+        notifyShutDown();
     }
 
     /**
@@ -270,6 +369,7 @@ public abstract class ToolUser
             return CompletableFuture.failedFuture(new NoSuchElementException("Procedure has no active step!"));
 
         sendMessage(step);
+        notifyStepChanged();
 
         if (!step.waitForUserInput())
             return handleInputWithLock(null);
