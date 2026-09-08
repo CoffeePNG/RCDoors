@@ -135,18 +135,14 @@ def plugin_name(contents):
 
 
 def matching_jars(panel, directory, identity):
+    """Filter the directory listing without downloading unrelated plugin JARs."""
     matches = []
     for name, attributes in panel.files(directory).items():
-        if not name.lower().endswith(".jar"):
+        if not name.lower().endswith(".jar") or name[:-4].split("-", 1)[0].casefold() != identity.casefold():
             continue
         if not attributes.get("is_file") or attributes.get("is_symlink"):
             raise DeploymentError(f"Expected a normal plugin file at {directory}/{name}.")
-        try:
-            found_identity = plugin_name(panel.download(directory + "/" + name))
-        except DeploymentError as exc:
-            raise DeploymentError(f"{directory}/{name}: {exc}") from None
-        if found_identity == identity:
-            matches.append(name)
+        matches.append(name)
     return matches
 
 
@@ -167,10 +163,12 @@ def stage(panel, jar):
     identity = plugin_name(contents)
     installed = matching_jars(panel, "/plugins", identity)
     if len(installed) != 1:
-        raise DeploymentError(f"Expected exactly one installed {identity} plugin; found {len(installed)}. Resolve missing/duplicate JARs first.")
+        raise DeploymentError(f"Expected exactly one installed {identity} filename; found {len(installed)}. Use {identity}.jar or {identity}-VERSION.jar and resolve duplicates.")
     name = installed[0]
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.jar", name):
         raise DeploymentError("The installed plugin needs a simple filename before enabling updates.")
+    if plugin_name(panel.download("/plugins/" + name)) != identity:
+        raise DeploymentError("The matching installed filename belongs to a different plugin.")
     print(f"Built {jar.name}; matched plugin {identity} to installed filename {name}.")
     panel.ensure_directory("/plugins", "update")
     other_pending = [item for item in matching_jars(panel, "/plugins/update", identity) if item != name]
@@ -182,9 +180,10 @@ def stage(panel, jar):
     if pending:
         if not pending.get("is_file") or pending.get("is_symlink"):
             raise DeploymentError("The update destination must be a normal file.")
-        if plugin_name(panel.download(destination)) != identity:
+        pending_contents = panel.download(destination)
+        if plugin_name(pending_contents) != identity:
             raise DeploymentError("The update filename belongs to a different plugin.")
-        pending_checksum = panel.checksum(destination)
+        pending_checksum = hashlib.sha256(pending_contents).hexdigest()
         if pending_checksum == checksum:
             print(f"{name} is already staged with SHA-256 {checksum}.")
             return

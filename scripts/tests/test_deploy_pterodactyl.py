@@ -10,7 +10,7 @@ from urllib.parse import parse_qs, urlsplit
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from deploy_pterodactyl import DeploymentError, NoRedirects, Panel, stage, plugin_name
+from deploy_pterodactyl import DeploymentError, NoRedirects, Panel, stage, plugin_name, matching_jars
 
 
 def jar_bytes(name="RCPlatform", version="old"):
@@ -107,13 +107,16 @@ class DeploymentTests(unittest.TestCase):
         self.assertNotIn("/plugins/update/RCPlatform-3.1.jar", self.panel.storage)
         self.assertEqual(self.panel.storage["/plugins/RCPlatform-3.0.jar"], INSTALLED)
 
-    def test_renamed_jar_is_matched_by_identity(self):
+    def test_custom_filename_is_rejected_without_scanning_its_contents(self):
         self.panel.storage = {"/plugins/custom-name.jar": INSTALLED}
-        stage(self.panel, self.jar)
-        self.assertEqual(self.panel.storage["/plugins/update/custom-name.jar"], self.jar.read_bytes())
+        self.panel.download = Mock(wraps=self.panel.download)
+        with self.assertRaisesRegex(DeploymentError, "RCPlatform-VERSION.jar"):
+            stage(self.panel, self.jar)
+        self.panel.download.assert_not_called()
+        self.assertEqual(self.panel.mutations, [])
 
     def test_missing_or_duplicate_installed_identity_blocks_deployment(self):
-        for storage in ({}, {"/plugins/a.jar": INSTALLED, "/plugins/b.jar": INSTALLED}):
+        for storage in ({}, {"/plugins/RCPlatform.jar": INSTALLED, "/plugins/RCPlatform-4.0.jar": INSTALLED}):
             self.panel.storage = storage
             with self.assertRaisesRegex(DeploymentError, "exactly one installed"):
                 stage(self.panel, self.jar)
@@ -121,8 +124,38 @@ class DeploymentTests(unittest.TestCase):
 
     def test_matching_filename_with_wrong_identity_is_not_replaced(self):
         self.panel.storage = {"/plugins/RCPlatform.jar": jar_bytes("DifferentPlugin")}
+        with self.assertRaisesRegex(DeploymentError, "different plugin"):
+            stage(self.panel, self.jar)
+        self.assertEqual(self.panel.mutations, [])
+
+    def test_unrelated_jars_are_never_downloaded_in_either_directory(self):
+        for directory in ("/plugins", "/plugins/update"):
+            for i in range(100):
+                self.panel.storage[f"{directory}/Unrelated{i}-1.0.jar"] = b"not even a readable jar"
+            self.panel.storage[directory + "/RCPlatformExtra-1.0.jar"] = b"different prefix"
+        self.panel.download = Mock(wraps=self.panel.download)
+        stage(self.panel, self.jar)
+        self.assertEqual([call.args[0] for call in self.panel.download.call_args_list], ["/plugins/RCPlatform.jar"])
+
+    def test_directory_lookup_does_not_download_any_jar(self):
+        self.panel.storage = {"/plugins/rcplatform-4.1.0-SNAPSHOT.JAR": INSTALLED}
+        self.panel.download = Mock(wraps=self.panel.download)
+        self.assertEqual(matching_jars(self.panel, "/plugins", "RCPlatform"), ["rcplatform-4.1.0-SNAPSHOT.JAR"])
+        self.panel.download.assert_not_called()
+
+    def test_pending_identity_and_checksum_share_one_download(self):
+        self.panel.storage["/plugins/update/RCPlatform.jar"] = self.jar.read_bytes()
+        self.panel.download = Mock(wraps=self.panel.download)
+        stage(self.panel, self.jar)
+        self.assertEqual([call.args[0] for call in self.panel.download.call_args_list], ["/plugins/RCPlatform.jar", "/plugins/update/RCPlatform.jar"])
+        self.assertEqual(self.panel.mutations, [])
+
+    def test_duplicate_filename_candidates_fail_before_download(self):
+        self.panel.storage["/plugins/RCPlatform-4.0.jar"] = INSTALLED
+        self.panel.download = Mock(wraps=self.panel.download)
         with self.assertRaisesRegex(DeploymentError, "exactly one installed"):
             stage(self.panel, self.jar)
+        self.panel.download.assert_not_called()
         self.assertEqual(self.panel.mutations, [])
 
     def test_duplicate_versioned_pending_update_is_rejected(self):

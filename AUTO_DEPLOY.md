@@ -27,9 +27,14 @@ Older source commits are skipped by the NAS. Previous published JARs remain in
 the artifact branch's Git history; this increases repository storage over time.
 Manual workflow runs must select `codex/prebuilt`.
 
-The uploader matches the identity inside the JAR and retains the installed
-filename, even if it contains an older version number. It rejects duplicate or
-missing installed plugins, verifies temporary uploads, and preserves the prior
-pending update if promotion fails. No server restart, live JAR replacement,
+The uploader first filters the directory listing by the exact plugin name before
+the first hyphen (case-insensitive), or the entire name for an unversioned JAR.
+Use `PluginName.jar` or `PluginName-VERSION.jar`; arbitrary renamed JARs are not
+supported. Only the matching installed JAR and relevant pending JAR are downloaded
+to verify their internal identities. Unrelated and third-party JARs are never
+downloaded. Multiple matching filenames stop deployment before any replacement.
+The installed filename is retained even if it contains an older version number;
+the contents are the new version. Temporary uploads are verified, and the prior
+pending update is preserved if promotion fails. No server restart, live JAR replacement,
 configuration edits or plugin-data changes occur. Restart after uploads finish
 to apply the pending updates.
