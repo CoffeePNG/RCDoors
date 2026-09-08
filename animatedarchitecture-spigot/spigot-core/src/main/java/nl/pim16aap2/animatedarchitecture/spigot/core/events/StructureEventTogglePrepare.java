@@ -25,6 +25,10 @@ public class StructureEventTogglePrepare extends StructureToggleEvent implements
     private boolean isCancelled = false;
 
     @Getter
+    @Setter
+    private boolean accessAuthorized;
+
+    @Getter
     private final Cuboid newCuboid;
 
     /**

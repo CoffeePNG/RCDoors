@@ -248,11 +248,13 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
     {
         unregisterRCPlatform();
 
-        final var doorService = new RCPlatformDoorService(platform);
+        final var doorService = new RCPlatformDoorService(platform, getDataFolder().toPath().resolve("organization-door-claims.properties"));
         final var registrations = new RegistrationGroup();
         try
         {
             registrations.add(Services.register(this, DoorService.class, doorService));
+            registrations.add(Services.register(this, net.republicraft.platform.api.door.DoorAccessService.class, doorService));
+            getServer().getPluginManager().registerEvents(doorService,this);
 
             final CapabilityRegistry capabilities = Services.require(this, CapabilityRegistry.class);
             registrations.add(capabilities.register(

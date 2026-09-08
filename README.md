@@ -109,6 +109,16 @@ New RepubliCraft integrations should resolve RCPlatform's `DoorService` instead 
 commands. The service accepts decimal AnimatedArchitecture structure UIDs, returns explicit outcomes, and keeps the
 upstream implementation types behind the adapter boundary.
 
+RCBusiness and RCCriminalEnterprises register organization access through `DoorAccessService`.
+Registered organization doors use their numeric structure UID. Claims are saved atomically in
+`organization-door-claims.properties` and survive an organization provider being disabled or a
+server restart. A claimed door denies access until its provider supplies an explicit current
+allowance. Native door commands and contract requests apply the same organization policy;
+authorized door movement does not give members general permission to edit blocks.
+Only the claiming plugin and organization may release a claim after durable asset removal.
+Back up the claim file with the organization databases. Invalid claim data prevents the door
+adapter from starting with unprotected access.
+
 For the original API documentation and project history, refer to the
 [AnimatedArchitecture repository](https://github.com/PimvanderLoos/AnimatedArchitecture) and its
 [published Javadocs](https://pimvanderloos.github.io/AnimatedArchitecture/javadoc/).

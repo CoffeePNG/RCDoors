@@ -17,4 +17,7 @@ public interface IStructureEventTogglePrepare extends IStructureToggleEvent, ICa
      * @return The new coordinates of the structure after the toggle.
      */
     Cuboid getNewCuboid();
+
+    /** A registered external owner may grant this one door movement without granting block-edit access. */
+    default boolean isAccessAuthorized() { return false; }
 }

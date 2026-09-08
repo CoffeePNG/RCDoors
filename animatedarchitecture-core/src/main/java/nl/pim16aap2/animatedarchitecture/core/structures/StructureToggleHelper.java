@@ -371,7 +371,7 @@ final class StructureToggleHelper
         if (!animationType.requiresWriteAccess())
             return toggle(stamp, targetStructure, data, component, player, animationType);
 
-        if (!requiresProtectionCheck(data.getCause()))
+        if (!requiresProtectionCheck(data.getCause()) || prepareEvent.isAccessAuthorized())
             return toggle(stamp, targetStructure, data, component, player, animationType);
 
         return canBreakBlocks(snapshot, snapshot.getCuboid(), data.getNewCuboid(), data.getResponsible())
