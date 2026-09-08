@@ -1,34 +1,35 @@
 # Automatic RCDoors updates
 
-Pushes to `main` build and test the plugin on the UGREEN NAS. Pull requests only
-build and test. A successful latest-main build is retained as an Actions artifact
-for 30 days and staged on Pterodactyl server `6c2b7716` using the repository secret
-`PTERODACTYL_API_KEY`. A manual workflow run on `main` uses the same checks.
+The local machine builds and tests once. Forgejo stores that exact tested JAR on
+`codex/prebuilt`; the NAS downloads it, verifies its SHA-256 and plugin identity,
+and stages it in `/plugins/update` on Pterodactyl server `6c2b7716`.
+The NAS does not run Java, Maven, or plugin tests.
 
-The uploader reads `name` from plugin.yml/paper-plugin.yml inside the built and
-installed JARs. It requires exactly one installed plugin with that identity and
-uses its existing filename in `/plugins/update`. For example, a new 3.1 build
-replaces the contents of an installed `Plugin-3.0.jar` on the next normal restart;
-the filename can retain 3.0 while the plugin's internal version is 3.1. No second
-installed JAR is created. Duplicate installed or differently named pending JARs
-stop deployment for review. Install a missing plugin once before enabling uploads.
+## Normal development
 
-Uploads use a temporary filename and SHA-256 verification before promotion.
-The previous pending update is backed up during replacement and restored if
-promotion fails. Failed temporary files can be inspected in the update directory.
-No power commands, live JAR replacement, config changes, or plugin-data changes
-are made. Changes take effect at the next server restart.
+Requirements: Java 25, Maven, Python 3 and PyYAML. Keep the dependency repositories
+as siblings with their committed `main` branches up to date.
 
-Build dependencies are checked out from their `main` branches and compiled on the
-runner. The runner needs read access to the internal RCPlatform/RCUI repositories
-(and RCBusiness for RCCriminalEnterprises). Checkout logs record dependency commits.
-The NAS runs one job at a time using its existing isolated Docker engine.
+1. Edit and stage the intended source files.
+2. `python scripts/publish_local.py prepare`
+3. Commit the staged changes on `main`.
+4. `python scripts/publish_local.py publish`
 
-The uploader tests require Python 3 and PyYAML (`python3-yaml` on Debian).
-Run `python3 -m unittest discover -s scripts/tests -v` and Maven `clean verify`.
-Paper's update folder: https://docs.papermc.io/paper/updating/
+The publisher pushes source and the tested JAR using existing Git SSH access;
+no new API token is needed. A plain source-only push does not deploy. A failed
+build cannot be published, and publication refuses a commit whose source tree
+differs from the tested snapshot. Logs and the tested artifact are stored under
+the repository's Git metadata in `local-publish`. Dependency build results are
+reused only when their source commits, tool settings and installed-file hashes match.
 
-`BUILD_DEPENDENCIES_TOKEN` supplies read-only access to the four shared build/test
-repositories RCPlatform, RCUI, RCBusiness, and RCCriminalEnterprises. Dependency
-checkouts do not persist this token in Git config. Fork PRs without access to this
-secret require a trusted maintainer branch to run the private-dependency build.
+The manifest records the exact source and dependency commits and JAR checksum.
+Older source commits are skipped by the NAS. Previous published JARs remain in
+the artifact branch's Git history; this increases repository storage over time.
+Manual workflow runs must select `codex/prebuilt`.
+
+The uploader matches the identity inside the JAR and retains the installed
+filename, even if it contains an older version number. It rejects duplicate or
+missing installed plugins, verifies temporary uploads, and preserves the prior
+pending update if promotion fails. No server restart, live JAR replacement,
+configuration edits or plugin-data changes occur. Restart after uploads finish
+to apply the pending updates.

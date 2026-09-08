@@ -1,0 +1,24 @@
+{
+  "repository": "RepubliCraft/RCDoors",
+  "local_name": "RCDoors",
+  "identity": "RCDoors",
+  "artifact_directory": "animatedarchitecture-spigot/spigot-packager/target",
+  "checkouts": [
+    "RCPlatform",
+    "RCUI"
+  ],
+  "dependencies": [
+    {
+      "name": "RCPlatform",
+      "arguments": [
+        "-pl",
+        "rcplatform-api,contracts/rccomputers-api,contracts/rcfire-api,contracts/rchealth-api,contracts/rcheists-api,contracts/rcjobs-api,contracts/rclockpick-api,contracts/rcphone-api,contracts/rcpolice-api,contracts/rcregion-api,contracts/rcorganization-api,contracts/rcbusiness-api,contracts/rcenterprises-api",
+        "-am"
+      ]
+    },
+    {
+      "name": "RCUI",
+      "arguments": []
+    }
+  ]
+}
