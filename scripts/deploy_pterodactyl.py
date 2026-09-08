@@ -134,6 +134,25 @@ def plugin_name(contents):
         raise DeploymentError("Cannot read plugin identity from the JAR.") from None
 
 
+def plugin_version(contents):
+    """Read the release version from the artifact, never from its filename."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(contents)) as archive:
+            for descriptor in ("paper-plugin.yml", "plugin.yml"):
+                if descriptor not in archive.namelist():
+                    continue
+                if archive.getinfo(descriptor).file_size > 1024 * 1024:
+                    raise DeploymentError("Plugin descriptor is too large.")
+                metadata = yaml.safe_load(archive.read(descriptor))
+                version = metadata.get("version") if isinstance(metadata, dict) else None
+                if isinstance(version, bool) or not isinstance(version, (str, int, float)) or not str(version).strip():
+                    raise DeploymentError("Plugin descriptor has an invalid version.")
+                return str(version)
+    except (zipfile.BadZipFile, UnicodeError, yaml.YAMLError, RuntimeError):
+        raise DeploymentError("Cannot read plugin version from the JAR.") from None
+    raise DeploymentError("The JAR has no plugin version descriptor.")
+
+
 def matching_jars(panel, directory, identity):
     """Filter the directory listing without downloading unrelated plugin JARs."""
     matches = []
@@ -161,37 +180,39 @@ def stage(panel, jar):
         raise DeploymentError("The built plugin JAR is missing, unreadable, or invalid.") from None
     checksum = hashlib.sha256(contents).hexdigest()
     identity = plugin_name(contents)
+    version = plugin_version(contents)
     installed = matching_jars(panel, "/plugins", identity)
     if len(installed) != 1:
         raise DeploymentError(f"Expected exactly one installed {identity} filename; found {len(installed)}. Use {identity}.jar or {identity}-VERSION.jar and resolve duplicates.")
-    name = installed[0]
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.jar", name):
+    installed_name = installed[0]
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.jar", installed_name):
         raise DeploymentError("The installed plugin needs a simple filename before enabling updates.")
-    if plugin_name(panel.download("/plugins/" + name)) != identity:
+    if plugin_name(panel.download("/plugins/" + installed_name)) != identity:
         raise DeploymentError("The matching installed filename belongs to a different plugin.")
-    print(f"Built {jar.name}; matched plugin {identity} to installed filename {name}.")
+    name = identity + ".jar"
+    print(f"Verified {identity} version {version}; SHA-256 {checksum}.")
+    print(f"Built {jar.name}; matched plugin {identity} to installed filename {installed_name}; staging as {name}.")
     panel.ensure_directory("/plugins", "update")
-    other_pending = [item for item in matching_jars(panel, "/plugins/update", identity) if item != name]
-    if other_pending:
-        raise DeploymentError(f"Conflicting pending updates for {identity}: {', '.join(other_pending)}. Resolve them before deploying.")
-    destination = "/plugins/update/" + name
-    pending = panel.files("/plugins/update").get(name)
+    pending_names = matching_jars(panel, "/plugins/update", identity)
+    if len(pending_names) > 1:
+        raise DeploymentError(f"Conflicting pending updates for {identity}: {', '.join(pending_names)}. Resolve them before deploying.")
+    pending_name = pending_names[0] if pending_names else name
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.jar", pending_name):
+        raise DeploymentError("The pending plugin needs a simple filename before enabling updates.")
     pending_checksum = None
-    if pending:
-        if not pending.get("is_file") or pending.get("is_symlink"):
-            raise DeploymentError("The update destination must be a normal file.")
-        pending_contents = panel.download(destination)
+    if pending_names:
+        pending_contents = panel.download("/plugins/update/" + pending_name)
         if plugin_name(pending_contents) != identity:
             raise DeploymentError("The update filename belongs to a different plugin.")
         pending_checksum = hashlib.sha256(pending_contents).hexdigest()
-        if pending_checksum == checksum:
+        if pending_checksum == checksum and pending_name == name:
             print(f"{name} is already staged with SHA-256 {checksum}.")
             return
     temporary = f".{name}.{uuid.uuid4().hex}.uploading"
     panel.upload("/plugins/update", temporary, contents)
     if panel.checksum("/plugins/update/" + temporary) != checksum:
         raise DeploymentError("Uploaded checksum mismatch. The pending JAR was not replaced.")
-    promote(panel, temporary, name, checksum, pending_checksum)
+    promote(panel, temporary, name, checksum, pending_checksum, previous_name=pending_name)
     print(f"Staged {name} in /plugins/update; SHA-256 {checksum}.")
     print("It will take effect on the next server restart. No restart was requested.")
 
@@ -202,17 +223,18 @@ def rename_file(panel, source, target):
     })
 
 
-def promote(panel, temporary, name, checksum, pending_checksum):
+def promote(panel, temporary, name, checksum, pending_checksum, previous_name=None):
     """Wings refuses overwriting renames, so temporarily preserve a pending JAR.
 
     The old pending file stays recoverable until the new destination is verified.
     Files with .previous/.uploading suffixes are ignored by Paper.
     """
     directory = "/plugins/update/"
+    previous_name = previous_name or name
     backup = None
     if pending_checksum is not None:
-        backup = f".{name}.{uuid.uuid4().hex}.previous"
-        rename_file(panel, name, backup)
+        backup = f".{previous_name}.{uuid.uuid4().hex}.previous"
+        rename_file(panel, previous_name, backup)
         if panel.checksum(directory + backup) != pending_checksum:
             raise DeploymentError(f"Previous pending JAR could not be verified. Inspect {directory}{backup}.")
     try:
@@ -227,8 +249,8 @@ def promote(panel, temporary, name, checksum, pending_checksum):
             if current and panel.checksum(directory + name) == checksum:
                 pass  # The verified destination proves promotion completed.
             elif backup and current is None:
-                rename_file(panel, backup, name)
-                if panel.checksum(directory + name) != pending_checksum:
+                rename_file(panel, backup, previous_name)
+                if panel.checksum(directory + previous_name) != pending_checksum:
                     raise DeploymentError("Restored pending JAR checksum mismatch.")
                 restored = True
             else:

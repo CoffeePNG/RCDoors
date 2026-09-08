@@ -73,6 +73,15 @@ class DeploymentTests(unittest.TestCase):
             archive.writestr("example/Plugin.class", b"compiled plugin")
         self.panel = FakePanel()
 
+    def test_log_reports_internal_version_and_checksum_not_filename_version(self):
+        misleading_name = self.jar.with_name("RCPlatform-99.0.jar")
+        misleading_name.write_bytes(self.jar.read_bytes())
+        with patch("builtins.print") as output:
+            stage(self.panel, misleading_name)
+        messages = "\n".join(str(call.args[0]) for call in output.call_args_list)
+        self.assertIn("Verified RCPlatform version 1; SHA-256 " + hashlib.sha256(self.jar.read_bytes()).hexdigest(), messages)
+        self.assertIn("staging as RCPlatform.jar", messages)
+
     def test_upload_verifies_then_promotes_without_changing_installed_plugin(self):
         self.panel.storage["/plugins/update/RCPlatform.jar"] = PENDING
         self.panel.storage["/plugins/RCPlatform/config.yml"] = b"live config"
@@ -103,7 +112,8 @@ class DeploymentTests(unittest.TestCase):
         newer = self.jar.with_name("RCPlatform-3.1.jar")
         newer.write_bytes(self.jar.read_bytes())
         stage(self.panel, newer)
-        self.assertEqual(self.panel.storage["/plugins/update/RCPlatform-3.0.jar"], newer.read_bytes())
+        self.assertEqual(self.panel.storage["/plugins/update/RCPlatform.jar"], newer.read_bytes())
+        self.assertNotIn("/plugins/update/RCPlatform-3.0.jar", self.panel.storage)
         self.assertNotIn("/plugins/update/RCPlatform-3.1.jar", self.panel.storage)
         self.assertEqual(self.panel.storage["/plugins/RCPlatform-3.0.jar"], INSTALLED)
 
@@ -160,9 +170,45 @@ class DeploymentTests(unittest.TestCase):
 
     def test_duplicate_versioned_pending_update_is_rejected(self):
         self.panel.storage["/plugins/update/RCPlatform-3.0.jar"] = PENDING
+        self.panel.storage["/plugins/update/RCPlatform.jar"] = PENDING
         with self.assertRaisesRegex(DeploymentError, "Conflicting pending updates"):
             stage(self.panel, self.jar)
         self.assertEqual(self.panel.mutations, [])
+
+    def test_legacy_pending_name_is_replaced_by_one_stable_name(self):
+        self.panel.storage = {"/plugins/RCPlatform-3.0.jar": INSTALLED,
+                              "/plugins/update/RCPlatform-3.0.jar": PENDING}
+        stage(self.panel, self.jar)
+        self.assertEqual(self.panel.storage["/plugins/update/RCPlatform.jar"], self.jar.read_bytes())
+        self.assertEqual(self.panel.storage["/plugins/RCPlatform-3.0.jar"], INSTALLED)
+        self.assertEqual(list(self.panel.files("/plugins/update")), ["RCPlatform.jar"])
+
+    def test_identical_legacy_pending_jar_still_gets_stable_name(self):
+        self.panel.storage["/plugins/update/RCPlatform-4.1.0.jar"] = self.jar.read_bytes()
+        stage(self.panel, self.jar)
+        self.assertEqual(list(self.panel.files("/plugins/update")), ["RCPlatform.jar"])
+        self.assertEqual(self.panel.storage["/plugins/update/RCPlatform.jar"], self.jar.read_bytes())
+
+    def test_legacy_pending_is_restored_under_original_name_on_failure(self):
+        self.panel.storage["/plugins/update/RCPlatform-3.0.jar"] = PENDING
+        api = self.panel.api
+        def fail_promotion(method, path, payload):
+            if path == "/files/rename" and payload["files"][0]["from"].endswith(".uploading"):
+                raise DeploymentError("Promotion failed")
+            return api(method, path, payload)
+        self.panel.api = fail_promotion
+        with self.assertRaisesRegex(DeploymentError, "previous pending JAR was restored"):
+            stage(self.panel, self.jar)
+        self.assertEqual(self.panel.storage["/plugins/update/RCPlatform-3.0.jar"], PENDING)
+        self.assertNotIn("/plugins/update/RCPlatform.jar", self.panel.storage)
+
+    def test_corrupt_upload_preserves_legacy_pending_filename(self):
+        self.panel.storage["/plugins/update/RCPlatform-3.0.jar"] = PENDING
+        self.panel.corrupt_upload = True
+        with self.assertRaisesRegex(DeploymentError, "checksum mismatch"):
+            stage(self.panel, self.jar)
+        self.assertEqual(self.panel.storage["/plugins/update/RCPlatform-3.0.jar"], PENDING)
+        self.assertFalse(any(action[0] == "rename" for action in self.panel.mutations))
 
     def test_pending_filename_for_different_plugin_is_rejected(self):
         self.panel.storage["/plugins/update/RCPlatform.jar"] = jar_bytes("DifferentPlugin")

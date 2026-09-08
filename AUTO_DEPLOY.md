@@ -33,8 +33,16 @@ Use `PluginName.jar` or `PluginName-VERSION.jar`; arbitrary renamed JARs are not
 supported. Only the matching installed JAR and relevant pending JAR are downloaded
 to verify their internal identities. Unrelated and third-party JARs are never
 downloaded. Multiple matching filenames stop deployment before any replacement.
-The installed filename is retained even if it contains an older version number;
-the contents are the new version. Temporary uploads are verified, and the prior
-pending update is preserved if promotion fails. No server restart, live JAR replacement,
+Updates always use the stable `PluginName.jar` filename. A single pending
+versioned JAR is migrated to that stable name after the new upload is verified;
+multiple pending candidates are rejected. The prior pending file and its name
+are restored if promotion fails. Paper matches the internal plugin identity
+at startup, replaces the old installed JAR, and adopts the stable update filename.
+The running installed file is not renamed or replaced by the uploader.
+
+To verify a release, open the latest Forgejo Actions run and expand
+"Verify and forward the locally tested JAR". The log reports the exact source
+commit, the version read from inside the JAR, and its verified SHA-256 checksum.
+Use these values rather than inferring a version from the stable filename. No server restart, live JAR replacement,
 configuration edits or plugin-data changes occur. Restart after uploads finish
 to apply the pending updates.
