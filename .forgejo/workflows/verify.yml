@@ -43,6 +43,8 @@ jobs:
       - name: Check out RCPlatform build dependency
         uses: https://github.com/actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          token: ${{ secrets.FORGEJO_DEPENDENCY_TOKEN }}
+          persist-credentials: false
           repository: RepubliCraft/RCPlatform
           ref: main
           path: RCPlatform
@@ -51,6 +53,8 @@ jobs:
       - name: Check out RCUI build dependency
         uses: https://github.com/actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          token: ${{ secrets.FORGEJO_DEPENDENCY_TOKEN }}
+          persist-credentials: false
           repository: RepubliCraft/RCUI
           ref: main
           path: RCUI

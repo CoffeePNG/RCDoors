@@ -27,3 +27,8 @@ The NAS runs one job at a time using its existing isolated Docker engine.
 The uploader tests require Python 3 and PyYAML (`python3-yaml` on Debian).
 Run `python3 -m unittest discover -s scripts/tests -v` and Maven `clean verify`.
 Paper's update folder: https://docs.papermc.io/paper/updating/
+
+`FORGEJO_DEPENDENCY_TOKEN` supplies read-only access to the four shared build/test
+repositories RCPlatform, RCUI, RCBusiness, and RCCriminalEnterprises. Dependency
+checkouts do not persist this token in Git config. Fork PRs without access to this
+secret require a trusted maintainer branch to run the private-dependency build.
