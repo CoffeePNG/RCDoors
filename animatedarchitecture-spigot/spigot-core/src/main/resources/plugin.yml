@@ -1,6 +1,6 @@
 name: RCDoors
 main: nl.pim16aap2.animatedarchitecture.spigot.core.AnimatedArchitecturePlugin
-version: ${project.version}
+version: ${rcdoors.plugin.version}
 author: pim16aap2
 contributors:
   - RepubliCraft

@@ -9,6 +9,8 @@
     <name>RCDoors</name>
 
     <properties>
+        <!-- Plugin releases are independent of internal API/module artifact versions. -->
+        <rcdoors.plugin.version>4.1.0</rcdoors.plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <lombok.encoding>UTF-8</lombok.encoding>
         <maven.compiler.release>25</maven.compiler.release>
