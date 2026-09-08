@@ -25,7 +25,7 @@ import nl.pim16aap2.animatedarchitecture.core.events.IAnimatedArchitectureEventC
 import nl.pim16aap2.animatedarchitecture.core.extensions.StructureTypeLoader;
 import nl.pim16aap2.animatedarchitecture.core.localization.ILocalizer;
 import nl.pim16aap2.animatedarchitecture.core.localization.LocalizationManager;
-import nl.pim16aap2.animatedarchitecture.core.localization.LocalizationModule;
+import nl.pim16aap2.animatedarchitecture.spigot.core.implementations.RcuiLocalizationModule;
 import nl.pim16aap2.animatedarchitecture.core.managers.AnimatedBlockHookManager;
 import nl.pim16aap2.animatedarchitecture.core.managers.AnimationHookManager;
 import nl.pim16aap2.animatedarchitecture.core.managers.DatabaseManager;
@@ -95,7 +95,7 @@ import javax.inject.Singleton;
         ExecutorModule.class,
         GuiFactorySpigotModule.class,
         HighlightedBlockSpawnerModule.class,
-        LocalizationModule.class,
+        RcuiLocalizationModule.class,
         LocationFactorySpigotModule.class,
         MessagingInterfaceSpigotModule.class,
         PlayerFactorySpigotModule.class,

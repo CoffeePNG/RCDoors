@@ -14,8 +14,7 @@
     <properties>
         <project.root-dir>${project.basedir}/../..</project.root-dir>
 
-        <dependency.adventure-api.version>4.18.0</dependency.adventure-api.version>
-        <dependency.adventure-bukkit.version>4.3.4</dependency.adventure-bukkit.version>
+        <dependency.adventure-api.version>5.2.0</dependency.adventure-api.version>
         <dependency.commodore.version>2.2</dependency.commodore.version>
         <dependency.cloud.version>1.8.4</dependency.cloud.version>
         <dependency.inventory-gui.version>1.6.5-SNAPSHOT</dependency.inventory-gui.version>
@@ -30,6 +29,12 @@
     </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>net.republicraft</groupId>
+            <artifactId>RCUI</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>net.republicraft.platform</groupId>
             <artifactId>rcplatform-api</artifactId>
@@ -120,19 +125,6 @@
         </dependency>
         <dependency>
             <groupId>cloud.commandframework</groupId>
-            <artifactId>cloud-minecraft-extras</artifactId>
-            <version>${dependency.cloud.version}</version>
-            <scope>compile</scope>
-            <optional>true</optional>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.checkerframework</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>cloud.commandframework</groupId>
             <artifactId>cloud-paper</artifactId>
             <version>${dependency.cloud.version}</version>
             <scope>compile</scope>
@@ -152,19 +144,24 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Shared with Paper and RCUI; never relocate or bundle Adventure public API types. -->
         <dependency>
             <groupId>net.kyori</groupId>
             <artifactId>adventure-api</artifactId>
             <version>${dependency.adventure-api.version}</version>
-            <scope>compile</scope>
-            <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>net.kyori</groupId>
-            <artifactId>adventure-platform-bukkit</artifactId>
-            <version>${dependency.adventure-bukkit.version}</version>
-            <scope>compile</scope>
-            <optional>true</optional>
+            <artifactId>adventure-text-minimessage</artifactId>
+            <version>${dependency.adventure-api.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-plain</artifactId>
+            <version>${dependency.adventure-api.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

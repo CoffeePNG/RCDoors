@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 class AttributeButtonFactory
 {
+    private final nl.pim16aap2.animatedarchitecture.spigot.core.AnimatedArchitecturePlugin plugin;
     private final ILocalizer localizer;
     private final ITextFactory textFactory;
     private final CommandFactory commandFactory;
@@ -42,6 +43,7 @@ class AttributeButtonFactory
 
     @Inject
     AttributeButtonFactory(
+        nl.pim16aap2.animatedarchitecture.spigot.core.AnimatedArchitecturePlugin plugin,
         ILocalizer localizer,
         ITextFactory textFactory,
         CommandFactory commandFactory,
@@ -50,6 +52,7 @@ class AttributeButtonFactory
         StructureAnimationRequestBuilder structureAnimationRequestBuilder,
         DeleteGui.IFactory deleteGuiFactory)
     {
+        this.plugin = plugin;
         this.localizer = localizer;
         this.textFactory = textFactory;
         this.commandFactory = commandFactory;
@@ -81,7 +84,7 @@ class AttributeButtonFactory
             new GuiStateElement.State(
                 change -> lockButtonExecute(true, change, structure, player),
                 "isLocked",
-                new ItemStack(Material.RED_STAINED_GLASS_PANE),
+                GuiUtil.skin(plugin, "info", "unlock", new ItemStack(Material.RED_STAINED_GLASS_PANE)),
                 localizer.getMessage(
                     "gui.info_page.attribute.unlock",
                     localizer.getMessage(structure.getType().getLocalizationKey()))
@@ -89,7 +92,7 @@ class AttributeButtonFactory
             new GuiStateElement.State(
                 change -> lockButtonExecute(false, change, structure, player),
                 "isUnlocked",
-                new ItemStack(Material.GREEN_STAINED_GLASS_PANE),
+                GuiUtil.skin(plugin, "info", "lock", new ItemStack(Material.GREEN_STAINED_GLASS_PANE)),
                 localizer.getMessage(
                     "gui.info_page.attribute.lock",
                     localizer.getMessage(structure.getType().getLocalizationKey()))
@@ -103,7 +106,7 @@ class AttributeButtonFactory
     {
         return new StaticGuiElement(
             slotChar,
-            new ItemStack(Material.LEVER),
+            GuiUtil.skin(plugin, "info", "toggle", new ItemStack(Material.LEVER)),
             click ->
             {
                 structureAnimationRequestBuilder
@@ -127,7 +130,7 @@ class AttributeButtonFactory
     {
         return new StaticGuiElement(
             slotChar,
-            new ItemStack(Material.ENDER_EYE),
+            GuiUtil.skin(plugin, "info", "preview", new ItemStack(Material.ENDER_EYE)),
             click ->
             {
                 structureAnimationRequestBuilder
@@ -152,7 +155,7 @@ class AttributeButtonFactory
     {
         return new StaticGuiElement(
             slotChar,
-            new ItemStack(Material.BOOKSHELF),
+            GuiUtil.skin(plugin, "info", "info", new ItemStack(Material.BOOKSHELF)),
             click ->
             {
                 commandFactory
@@ -172,7 +175,7 @@ class AttributeButtonFactory
     {
         return new StaticGuiElement(
             slotChar,
-            new ItemStack(Material.BARRIER),
+            GuiUtil.skin(plugin, "info", "delete", new ItemStack(Material.BARRIER)),
             click ->
             {
                 deleteGuiFactory.newDeleteGui(structure, player);
@@ -188,7 +191,7 @@ class AttributeButtonFactory
     {
         return new StaticGuiElement(
             slotChar,
-            new ItemStack(Material.LEATHER_BOOTS),
+            GuiUtil.skin(plugin, "info", "relocate-power-block", new ItemStack(Material.LEATHER_BOOTS)),
             click ->
             {
                 commandFactory
@@ -228,7 +231,7 @@ class AttributeButtonFactory
             new GuiStateElement.State(
                 change -> isOpenButtonExecute(true, change, structure, player),
                 "isOpen",
-                new ItemStack(Material.WARPED_DOOR),
+                GuiUtil.skin(plugin, "info", "set-open", new ItemStack(Material.WARPED_DOOR)),
                 localizer.getMessage(
                     "gui.info_page.attribute.set_open",
                     localizer.getMessage(structure.getType().getLocalizationKey()))
@@ -236,7 +239,7 @@ class AttributeButtonFactory
             new GuiStateElement.State(
                 change -> isOpenButtonExecute(false, change, structure, player),
                 "isClosed",
-                new ItemStack(Material.MANGROVE_DOOR),
+                GuiUtil.skin(plugin, "info", "set-closed", new ItemStack(Material.MANGROVE_DOOR)),
                 localizer.getMessage(
                     "gui.info_page.attribute.set_closed",
                     localizer.getMessage(structure.getType().getLocalizationKey()))
@@ -269,7 +272,7 @@ class AttributeButtonFactory
 
         final var staticElement = new StaticGuiElement(
             slotChar,
-            new ItemStack(Material.COMPASS),
+            GuiUtil.skin(plugin, "info", "open-direction", new ItemStack(Material.COMPASS)),
             click ->
             {
                 final var newOpenDir = structure.getCycledOpenDirection();
@@ -299,7 +302,7 @@ class AttributeButtonFactory
     {
         return new StaticGuiElement(
             slotChar,
-            new ItemStack(Material.STICKY_PISTON),
+            GuiUtil.skin(plugin, "info", "blocks-to-move", new ItemStack(Material.STICKY_PISTON)),
             click ->
             {
                 commandFactory
@@ -319,7 +322,7 @@ class AttributeButtonFactory
     {
         return new StaticGuiElement(
             slotChar,
-            new ItemStack(Material.TRIPWIRE_HOOK),
+            GuiUtil.skin(plugin, "info", "proximity-radius", new ItemStack(Material.TRIPWIRE_HOOK)),
             click ->
             {
                 commandFactory
@@ -339,7 +342,7 @@ class AttributeButtonFactory
     {
         return new StaticGuiElement(
             slotChar,
-            new ItemStack(Material.PLAYER_HEAD),
+            GuiUtil.skin(plugin, "info", "add-owner", new ItemStack(Material.PLAYER_HEAD)),
             click ->
             {
                 commandFactory
@@ -359,7 +362,7 @@ class AttributeButtonFactory
     {
         return new StaticGuiElement(
             slotChar,
-            new ItemStack(Material.SKELETON_SKULL),
+            GuiUtil.skin(plugin, "info", "remove-owner", new ItemStack(Material.SKELETON_SKULL)),
             click ->
             {
                 commandFactory

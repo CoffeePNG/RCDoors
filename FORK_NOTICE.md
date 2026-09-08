@@ -25,6 +25,9 @@ Relative to the identified upstream revision, this fork:
 - keeps `/animatedarchitecture` and `/aa` as legacy command aliases alongside `/rcdoors` so existing integrations do
   not break during migration.
 
+The 2026-09-08 release audit adds durable native creation-fee receipts, phase-specific audited recovery,
+confirmed-price binding, and success notification after persistence.
+
 For exact implementation changes, consult this repository's commit history and compare it with the upstream revision
 linked above.
 

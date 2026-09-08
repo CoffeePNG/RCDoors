@@ -12,12 +12,9 @@ import cloud.commandframework.bukkit.parsers.PlayerArgument;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.extra.confirmation.CommandConfirmationManager;
 import cloud.commandframework.meta.CommandMeta;
-import cloud.commandframework.minecraft.extras.MinecraftExceptionHandler;
-import cloud.commandframework.minecraft.extras.MinecraftHelp;
 import cloud.commandframework.paper.PaperCommandManager;
 import lombok.extern.flogger.Flogger;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
-import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.audience.Audience;
 import nl.pim16aap2.animatedarchitecture.core.api.IExecutor;
 import nl.pim16aap2.animatedarchitecture.core.api.IPermissionsManager;
 import nl.pim16aap2.animatedarchitecture.core.api.IPlayer;
@@ -46,8 +43,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static net.kyori.adventure.text.Component.text;
-
 @Singleton
 @Flogger
 public final class CommandManager
@@ -61,7 +56,6 @@ public final class CommandManager
     private final StructureRetrieverFactory structureRetrieverFactory;
     private volatile @Nullable PaperCommandManager<ICommandSender> manager;
     private boolean asyncCompletions = false;
-    private final BukkitAudiences bukkitAudiences;
     private final StructureTypeParser structureTypeParser;
     private final DirectionParser directionParser;
     private final IsOpenParser isOpenParser;
@@ -92,7 +86,6 @@ public final class CommandManager
         this.structureRetrieverFactory = structureRetrieverFactory;
         this.structureTypeParser = structureTypeParser;
         this.directionParser = directionParser;
-        this.bukkitAudiences = BukkitAudiences.create(plugin);
         this.isOpenParser = isOpenParser;
         this.commandExecutor = commandExecutor;
         this.executor = executor;
@@ -135,21 +128,16 @@ public final class CommandManager
 
         confirmationManager.registerConfirmationProcessor(this.manager);
 
-        new MinecraftExceptionHandler<ICommandSender>()
-            .withInvalidSyntaxHandler()
-            .withInvalidSenderHandler()
-            .withNoPermissionHandler()
-            .withArgumentParsingHandler()
-            .withCommandExecutionHandler()
-            .withDecorator(component -> text()
-                .append(text("[", NamedTextColor.DARK_GRAY))
-                .append(text("RCDoors", NamedTextColor.GOLD))
-                .append(text("] ", NamedTextColor.DARK_GRAY))
-                .append(component)
-                .build())
-            .apply(manager, sender -> this.bukkitAudiences.sender(SpigotAdapter.unwrapCommandSender(sender)));
+        new NativeCommandPresentation<ICommandSender>(manager, this::presentation,
+            sender -> (Audience) SpigotAdapter.unwrapCommandSender(sender)).install();
 
         initCommands(manager);
+    }
+
+    private nl.pim16aap2.animatedarchitecture.spigot.core.NativePresentation presentation()
+    {
+        return Objects.requireNonNull(
+            ((nl.pim16aap2.animatedarchitecture.spigot.core.AnimatedArchitecturePlugin) plugin).getNativePresentation());
     }
 
     private void initCommands(BukkitCommandManager<ICommandSender> manager)
@@ -199,17 +187,14 @@ public final class CommandManager
         BukkitCommandManager<ICommandSender> manager,
         Command.Builder<ICommandSender> builder)
     {
-        final MinecraftHelp<ICommandSender> minecraftHelp = new MinecraftHelp<>(
-            "/rcdoors help",
-            sender -> this.bukkitAudiences.sender(SpigotAdapter.unwrapCommandSender(sender)),
-            manager
-        );
+        final NativeCommandPresentation<ICommandSender> help = new NativeCommandPresentation<>(
+            manager, this::presentation, sender -> (Audience) SpigotAdapter.unwrapCommandSender(sender));
 
         manager.command(builder
             .literal("help")
             .argument(StringArgument.optional("query", StringArgument.StringMode.GREEDY))
-            .handler(context -> minecraftHelp
-                .queryCommands(Objects.requireNonNull(context.getOrDefault("query", "")), context.getSender()))
+            .handler(context -> help
+                .help(Objects.requireNonNull(context.getOrDefault("query", "")), context.getSender()))
         );
     }
 

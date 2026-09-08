@@ -59,6 +59,11 @@ public final class VaultManager implements IRestartable, IEconomyManager, IPermi
     private final StructureTypeManager structureTypeManager;
     private final IExecutor executor;
     private final @Nullable Economy economy;
+    private final org.bukkit.plugin.java.JavaPlugin plugin;
+    private @Nullable CreationPayments creationPayments;
+    private @Nullable FeeMessages feeMessages;
+    private @Nullable net.republicraft.platform.api.data.DatabaseHandle feeDatabase;
+    private @Nullable net.republicraft.platform.api.task.TaskScope feeTasks;
 
     @Inject
     public VaultManager(
@@ -67,65 +72,153 @@ public final class VaultManager implements IRestartable, IEconomyManager, IPermi
         IConfig config,
         StructureTypeManager structureTypeManager,
         DebuggableRegistry debuggableRegistry,
-        IExecutor executor)
+        IExecutor executor, org.bukkit.plugin.java.JavaPlugin plugin,
+        nl.pim16aap2.animatedarchitecture.core.api.restartable.RestartableHolder restartableHolder)
     {
         this.localizer = localizer;
         this.textFactory = textFactory;
         this.config = config;
         this.structureTypeManager = structureTypeManager;
         this.executor = executor;
+        this.plugin = plugin;
 
         flatPrices = new HashMap<>();
         economy = setupEconomy();
         perms = setupPermissions();
 
         debuggableRegistry.registerDebuggable(this);
+        restartableHolder.registerRestartable(this);
     }
 
     @Override
     public boolean buyStructure(IPlayer player, IWorld world, StructureType type, int blockCount)
     {
-        if (!isEconomyEnabled())
+        if (getPrice(type, blockCount).isEmpty())
             return true;
-
-        final @Nullable Player spigotPlayer = SpigotAdapter.getBukkitPlayer(player);
-        if (spigotPlayer == null)
-        {
-            log.atSevere().withStackTrace(StackSize.FULL).log("Failed to obtain Spigot player: '%s'", player.getUUID());
-            return false;
-        }
-
-        final OptionalDouble priceOpt = getPrice(type, blockCount);
-        if (priceOpt.isEmpty())
-            return true;
-
-        final double price = priceOpt.getAsDouble();
-        if (withdrawPlayer(spigotPlayer, world.worldName(), price))
-        {
-            player.sendMessage(textFactory.newText().append(
-                localizer.getMessage("creator.base.money_withdrawn"),
-                TextType.SUCCESS,
-                arg -> arg.highlight(price))
-            );
-            return true;
-        }
-
-        player.sendMessage(textFactory.newText().append(
-            localizer.getMessage("creator.base.error.insufficient_funds"),
-            TextType.ERROR,
-            arg -> arg.highlight(localizer.getMessage(type.getLocalizationKey())),
-            arg -> arg.highlight(price))
-        );
-
-        log.atFine().log(
-            "Player '%s' does not have enough money to buy structure of type '%s' of size %d! Price: %f",
-            player.asString(),
-            type.getSimpleName(),
-            blockCount,
-            price
-        );
-
+        sendCreationMessage(player, "receipt-required");
         return false;
+    }
+
+    @Override
+    public boolean sendCreationMessage(IPlayer player, String key, Object... arguments)
+    {
+        final FeeMessages messages = feeMessages;
+        if (messages == null) return false;
+        final Player online = SpigotAdapter.getBukkitPlayer(player);
+        if (online != null && online.isOnline()) messages.send(online,key,arguments);
+        return true;
+    }
+
+    @Override
+    public CompletableFuture<CreationResult> createStructure(
+        java.util.UUID receipt, IPlayer player,
+        nl.pim16aap2.animatedarchitecture.core.structures.Structure structure, double quotedPrice,
+        java.util.function.Supplier<CompletableFuture<
+            nl.pim16aap2.animatedarchitecture.core.managers.DatabaseManager.StructureInsertResult>> insert)
+    {
+        return executor.composeOnMainThread(() -> createStructureOnMain(receipt, player, structure, quotedPrice, insert));
+    }
+
+    private CompletableFuture<CreationResult> createStructureOnMain(
+        java.util.UUID receipt, IPlayer player,
+        nl.pim16aap2.animatedarchitecture.core.structures.Structure structure, double quotedPrice,
+        java.util.function.Supplier<CompletableFuture<
+            nl.pim16aap2.animatedarchitecture.core.managers.DatabaseManager.StructureInsertResult>> insert)
+    {
+        final Player online = SpigotAdapter.getBukkitPlayer(player);
+        if (online == null || !online.isOnline() || !online.hasPermission(structure.getType().getCreationPermission()))
+            return CompletableFuture.completedFuture(new CreationResult("FAILED", "Current creation permission required"));
+        final double current = getPrice(structure.getType(), structure.getCuboid().getVolume()).orElse(0);
+        if (Double.compare(current, quotedPrice) != 0)
+            return CompletableFuture.completedFuture(new CreationResult("FAILED", "Creation price changed; review a new quote"));
+        if (quotedPrice == 0)
+            return IEconomyManager.super.createStructure(receipt,player,structure,0,insert);
+        final CreationPayments payments = creationPayments;
+        if (payments == null)
+            return CompletableFuture.completedFuture(new CreationResult("UNAVAILABLE", "Creation payment storage is unavailable"));
+        return payments.create(receipt, player.getUUID(), structure.getWorld().worldName(),
+            structure.getType().getSimpleName() + "/" + structure.getName() + "/" + structure.getCuboid(),
+            quotedPrice, insert).toCompletableFuture();
+    }
+
+    private CreationPayments.WalletResult creationWallet(CreationPayments.Receipt receipt, boolean refund)
+    {
+        final var registration = Bukkit.getServicesManager().getRegistration(Economy.class);
+        if (registration == null || registration.getProvider() == null)
+            return CreationPayments.WalletResult.FAILED;
+        final Economy currentEconomy = registration.getProvider();
+        try
+        {
+            final OfflinePlayer account = Bukkit.getOfflinePlayer(java.util.UUID.fromString(receipt.player()));
+            final double amount = java.math.BigDecimal.valueOf(receipt.cents(),2).doubleValue();
+            final EconomyResponse response = refund
+                ? currentEconomy.depositPlayer(account,receipt.world(),amount)
+                : currentEconomy.withdrawPlayer(account,receipt.world(),amount);
+            if (response == null || response.type == null) return CreationPayments.WalletResult.UNKNOWN;
+            return response.transactionSuccess() ? CreationPayments.WalletResult.SUCCESS : CreationPayments.WalletResult.FAILED;
+        }
+        catch (RuntimeException failure)
+        {
+            log.atSevere().withCause(failure).log("Unknown creation wallet result for %s", receipt.id());
+            return CreationPayments.WalletResult.UNKNOWN;
+        }
+    }
+
+    private void startCreationPayments()
+    {
+        final FeeMessages messages = new FeeMessages(plugin);
+        feeMessages = messages;
+        final var database = net.republicraft.platform.api.service.Services
+            .require(plugin,net.republicraft.platform.api.data.DatabaseService.class).open(plugin,CreationPayments.schema());
+        final var tasks = net.republicraft.platform.api.service.Services
+            .require(plugin,net.republicraft.platform.api.task.TaskService.class).scope(plugin,"creation-payments");
+        final var payments = new CreationPayments(database,(receipt,refund) -> tasks.sync(() -> creationWallet(receipt,refund)));
+        feeDatabase = database;
+        feeTasks = tasks;
+        creationPayments = payments;
+        payments.start().thenCompose(ignored -> payments.recoverRefunds()).exceptionally(failure ->
+        {
+            log.atSevere().withCause(failure).log("Creation payment recovery failed; paid creation remains protected");
+            return null;
+        });
+        tasks.repeat(java.time.Duration.ofSeconds(30),java.time.Duration.ofSeconds(30),
+            () -> payments.recoverRefunds().exceptionally(failure ->
+            {
+                log.atSevere().withCause(failure).log("Creation refund recovery failed"); return null;
+            }));
+        final var command = java.util.Objects.requireNonNull(plugin.getCommand("rcdoorfees"));
+        command.setExecutor((sender,unused,label,args) ->
+        {
+            if (!sender.hasPermission("rcdoors.fees.admin")) { messages.send(sender,"permission-denied"); return true; }
+            try
+            {
+                if (args.length >= 1 && args[0].equalsIgnoreCase("review"))
+                {
+                    final int page = args.length > 1 ? Math.max(1,Integer.parseInt(args[1])) : 1;
+                    payments.pending(page-1).whenComplete((rows,failure) -> tasks.run(() ->
+                    {
+                        if (failure != null) { messages.send(sender,"storage-unavailable"); return; }
+                        messages.send(sender,"review-page","page",page);
+                        for (var row : rows) messages.send(sender,"review-entry", "receipt",row.id(),
+                            "state",row.state(),"player",row.player(),"amount",java.math.BigDecimal.valueOf(row.cents(),2),
+                            "world",row.world(),"structure",row.description(),"detail",row.detail());
+                    }));
+                }
+                else if (args.length >= 4 && args[0].equalsIgnoreCase("resolve"))
+                {
+                    final var id = java.util.UUID.fromString(args[1]);
+                    final String reason = String.join(" ",java.util.Arrays.copyOfRange(args,3,args.length));
+                    final String actor = sender instanceof Player player ? player.getUniqueId().toString() : "CONSOLE";
+                    payments.resolve(id,actor,args[2].toLowerCase(java.util.Locale.ROOT),reason)
+                        .whenComplete((changed,failure) -> tasks.run(() -> messages.send(sender,
+                            failure != null ? "resolution-failed" : Boolean.TRUE.equals(changed)
+                                ? "resolution-recorded" : "resolution-rejected")));
+                }
+                else messages.send(sender,"usage");
+            }
+            catch (RuntimeException invalid) { messages.send(sender,"invalid-input","detail",invalid.getMessage()); }
+            return true;
+        });
     }
 
     @Override
@@ -195,18 +288,19 @@ public final class VaultManager implements IRestartable, IEconomyManager, IPermi
                     + "Include this: '%s' and stacktrace:",
                 formula
             );
-            return 0.0d;
+            throw new IllegalArgumentException("Invalid structure creation price formula: " + formula, e);
         }
     }
 
     @Override
     public OptionalDouble getPrice(StructureType type, int blockCount)
     {
-        if (!isEconomyEnabled())
-            return OptionalDouble.empty();
-
         // TODO: Store flat prices as OptionalDoubles.
         final double price = flatPrices.getOrDefault(type, evaluateFormula(config.getPrice(type), blockCount));
+
+        if (!Double.isFinite(price) || price < 0
+            || java.math.BigDecimal.valueOf(price).stripTrailingZeros().scale() > 2)
+            throw new IllegalArgumentException("Structure creation price must be finite, nonnegative, and exact cents");
 
         return price <= 0 ? OptionalDouble.empty() : OptionalDouble.of(price);
     }
@@ -222,7 +316,7 @@ public final class VaultManager implements IRestartable, IEconomyManager, IPermi
      */
     private boolean has(OfflinePlayer player, double amount)
     {
-        final boolean defaultValue = true;
+        final boolean defaultValue = false;
         if (economy == null)
         {
             log.atWarning().log(
@@ -258,7 +352,7 @@ public final class VaultManager implements IRestartable, IEconomyManager, IPermi
      */
     private boolean withdrawPlayer(OfflinePlayer player, String worldName, double amount)
     {
-        final boolean defaultValue = true;
+        final boolean defaultValue = false;
         if (economy == null)
         {
             log.atWarning().log(
@@ -355,12 +449,21 @@ public final class VaultManager implements IRestartable, IEconomyManager, IPermi
     {
         for (final StructureType type : structureTypeManager.getEnabledStructureTypes())
             getFlatPrice(type);
+        startCreationPayments();
     }
 
     @Override
     public void shutDown()
     {
         flatPrices.clear();
+        final CreationPayments payments = creationPayments;
+        creationPayments = null;
+        feeMessages = null;
+        if (payments != null) payments.close();
+        if (feeTasks != null) feeTasks.close();
+        if (feeDatabase != null) feeDatabase.close();
+        feeTasks = null;
+        feeDatabase = null;
     }
 
     @Override
@@ -370,7 +473,7 @@ public final class VaultManager implements IRestartable, IEconomyManager, IPermi
         final Set<PermissionAttachmentInfo> playerPermissions = player.getEffectivePermissions();
         int ret = -1;
         for (final PermissionAttachmentInfo permission : playerPermissions)
-            if (permission.getPermission().startsWith(permissionBase))
+            if (permission.getValue() && permission.getPermission().startsWith(permissionBase))
             {
                 final OptionalInt suffix = MathUtil.parseInt(permission
                     .getPermission()

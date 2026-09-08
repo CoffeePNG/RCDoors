@@ -80,7 +80,7 @@ class DeleteGui implements IGuiPage
                 structure.getNameAndUid()),
             guiSetup);
 
-        gui.setFiller(FILLER);
+        gui.setFiller(GuiUtil.skin(animatedArchitecturePlugin, "delete", "filler", FILLER));
 
         populateGUI(gui);
 
@@ -91,7 +91,7 @@ class DeleteGui implements IGuiPage
     {
         gui.addElement(new StaticGuiElement(
             's',
-            new ItemStack(Material.GREEN_STAINED_GLASS_PANE),
+            GuiUtil.skin(animatedArchitecturePlugin, "delete", "cancel", new ItemStack(Material.GREEN_STAINED_GLASS_PANE)),
             click ->
             {
                 GuiUtil.closeGuiPage(gui, inventoryHolder);
@@ -103,7 +103,7 @@ class DeleteGui implements IGuiPage
         ));
         gui.addElement(new StaticGuiElement(
             'd',
-            new ItemStack(Material.BARRIER),
+            GuiUtil.skin(animatedArchitecturePlugin, "delete", "confirm", new ItemStack(Material.BARRIER)),
             click ->
             {
                 commandFactory

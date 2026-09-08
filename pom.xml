@@ -441,10 +441,6 @@
                                 <shadedPattern>nl.pim16aap2.animatedarchitecture.lib.commodore</shadedPattern>
                             </relocation>
                             <relocation>
-                                <pattern>net.kyori</pattern>
-                                <shadedPattern>nl.pim16aap2.animatedarchitecture.lib.kyori</shadedPattern>
-                            </relocation>
-                            <relocation>
                                 <pattern>nl.pim16aap2.jcalculator</pattern>
                                 <shadedPattern>nl.pim16aap2.animatedarchitecture.lib.jcalculator</shadedPattern>
                             </relocation>
@@ -473,6 +469,10 @@
                                 <shadedPattern>nl.pim16aap2.animatedarchitecture.lib.jakarta.inject</shadedPattern>
                             </relocation>
                         </relocations>
+                        <!-- Paper owns Adventure; RCUI signatures must keep these shared classes unrelocated. -->
+                        <artifactSet>
+                            <excludes><exclude>net.kyori:*</exclude></excludes>
+                        </artifactSet>
                         <filters>
                             <filter>
                                 <artifact>*:*</artifact>

@@ -1,0 +1,37 @@
+# Native menu button skins, managed by RCUI under the stable rcdoors namespace.
+# Empty definitions preserve the native material, name, lore and click action.
+main:
+  filler: { hdb-id: '', texture-value: '' }
+  structure-entry: { hdb-id: '', texture-value: '' }
+  first-page: { hdb-id: '', texture-value: '' }
+  previous-page: { hdb-id: '', texture-value: '' }
+  create-structure: { hdb-id: '', texture-value: '' }
+  next-page: { hdb-id: '', texture-value: '' }
+  last-page: { hdb-id: '', texture-value: '' }
+  sort: { hdb-id: '', texture-value: '' }
+info:
+  filler: { hdb-id: '', texture-value: '' }
+  summary: { hdb-id: '', texture-value: '' }
+  back: { hdb-id: '', texture-value: '' }
+  unlock: { hdb-id: '', texture-value: '' }
+  lock: { hdb-id: '', texture-value: '' }
+  toggle: { hdb-id: '', texture-value: '' }
+  preview: { hdb-id: '', texture-value: '' }
+  info: { hdb-id: '', texture-value: '' }
+  delete: { hdb-id: '', texture-value: '' }
+  relocate-power-block: { hdb-id: '', texture-value: '' }
+  set-open: { hdb-id: '', texture-value: '' }
+  set-closed: { hdb-id: '', texture-value: '' }
+  open-direction: { hdb-id: '', texture-value: '' }
+  blocks-to-move: { hdb-id: '', texture-value: '' }
+  proximity-radius: { hdb-id: '', texture-value: '' }
+  add-owner: { hdb-id: '', texture-value: '' }
+  remove-owner: { hdb-id: '', texture-value: '' }
+create:
+  filler: { hdb-id: '', texture-value: '' }
+  back: { hdb-id: '', texture-value: '' }
+  structure-type: { hdb-id: '', texture-value: '' }
+delete:
+  filler: { hdb-id: '', texture-value: '' }
+  cancel: { hdb-id: '', texture-value: '' }
+  confirm: { hdb-id: '', texture-value: '' }

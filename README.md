@@ -16,6 +16,7 @@ to migrate existing installations safely.
 - Paper 26.2
 - Java 25 or newer
 - RCPlatform 1.0.0
+- RCUI 3.0.1
 - Vault
 
 RCDoors is built and tested for Paper 26.2. Other server versions or implementations are outside this fork's support
@@ -35,7 +36,7 @@ target.
 
 ## Installation
 
-1. Install RCPlatform and Vault on the server.
+1. Install RCPlatform, RCUI 3.0.1 and Vault on the server.
 2. Place `RCDoors.jar` in the server's `plugins` directory.
 3. Start or restart the server.
 4. Review the generated files in `plugins/RCDoors` before opening the server to players.
@@ -63,6 +64,8 @@ merge data manually, stop the server and back up both directories first.
 Existing permission assignments continue to use the legacy `animatedarchitecture.*` nodes. This is intentional
 compatibility behavior, not incomplete branding. Existing custom extensions continue to use their original manifests
 and internal API names.
+
+Organization-linked doors retain durable claims while their Business or Criminal Enterprises provider is unloaded. Direct player actions recheck the organization's current policy; denied, removed, or suspended members cannot borrow the original structure owner's access. Claimed doors reject native redstone, proximity and perpetual automation because those paths identify the original owner instead of the actual person who triggered them. Trusted server operations, including RCHeists door control, remain available. Unclaimed structures retain their native automation behavior. Back up the organization claim file with both the structure database and organization data; do not remove claims to work around a provider outage.
 
 ### Migrating from BigDoors
 
@@ -128,3 +131,90 @@ For the original API documentation and project history, refer to the
 RCDoors is distributed under the GNU General Public License, version 3. The upstream `LICENSE` file is retained in this
 repository. AnimatedArchitecture and its contributors remain credited as the authors of the upstream work; RepubliCraft
 maintains the modifications described in [FORK_NOTICE.md](FORK_NOTICE.md).
+
+
+## Creation fees and recovery
+
+A creation price confirmation records the reviewed amount without debiting the player. RCDoors
+constructs the proposed structure first, then persists a creation payment receipt before dispatching
+its wallet debit and native database insertion. Success appears only after those operations finish.
+Repeated completion callbacks reuse one receipt. Changing the configured price requires a fresh
+review. A configured positive fee remains payable when the economy provider is unavailable; it never
+silently becomes free. Zero-price structures keep the free creation path.
+
+The Platform-managed `creation-payments` database stores permanent fee identities, player/world/type,
+name/cuboid, exact amount, phase, native UID when known, and immutable reconciliation decisions. Back
+it up with the native structure database and organization claim file. Do not clear payment rows to
+unlock a player. One unresolved paid creation prevents that player from starting another paid creation.
+
+A cancelled native prepare-create event refunds a known debit through a separately journaled wallet
+call. Restart recovers a known completed debit that never reached insertion as a refund. A failed or
+interrupted native insertion can have an unknown outcome; it requires inspection before either
+acknowledging creation or refunding. Unknown debit/refund responses never automatically repeat.
+Known rejected refunds retry every 30 seconds.
+
+Console or staff with `rcdoors.fees.admin` can inspect and reconcile receipts:
+
+```text
+/rcdoorfees review [page]
+/rcdoorfees resolve <receipt UUID> debit-applied <observed outcome reason>
+/rcdoorfees resolve <receipt UUID> debit-not-applied <observed outcome reason>
+/rcdoorfees resolve <receipt UUID> created <native UID and matching structure evidence>
+/rcdoorfees resolve <receipt UUID> not-created <native database inspection evidence>
+/rcdoorfees resolve <receipt UUID> refund-applied <observed outcome reason>
+/rcdoorfees resolve <receipt UUID> refund-not-applied <observed outcome reason>
+```
+
+Use the decision matching the reported phase and verify the economy/native database history first.
+`debit-applied` after an interrupted debit and `not-created` after an uncertain insertion schedule a
+refund; they do not resume an old creation session. `created` acknowledges the observed native
+structure and keeps its fee. `refund-not-applied` permits one new refund dispatch. Reasons are
+required and immutable. Active operations cannot be resolved concurrently.
+
+Integrations that previously called `IEconomyManager.buyStructure` for a positive fee must use
+`createStructure` with a stable receipt, reviewed amount and native insertion callback. The old
+unjournaled positive-fee method now rejects payment; its zero-fee compatibility path remains available.
+The interface's default creation implementation supports free structures and rejects paid operations
+unless a durable provider implements them.
+
+
+RC-owned creation fee messages and recovery commands use the `rcdoors-fees` RCUI catalog.
+Operators edit `plugins/RCUI/messages/rcdoors-fees.yml`; bundled `fees-messages.yml` supplies defaults.
+Player names, receipt descriptions and operator reasons are inserted as unparsed placeholders.
+
+## Native messages and menu buttons through RCUI
+
+RCDoors requires RCUI 3.0.1. Native messages are registered in
+`plugins/RCUI/messages/rcdoors.yml`, and menu skins in the `rcdoors` namespace of
+`plugins/RCUI/buttons.yml`. The four stable screens are `main`, `info`, `create`, and
+`delete`; the bundled `buttons.yml` lists all 31 button/filler IDs. Empty skin settings
+preserve the configured native material and all menu actions.
+
+Every bundled native translation key has a `.text` leaf in the RCUI catalog. For example,
+`commands.version.success.text` defaults to `<native>`. That placeholder preserves the
+configured native language and existing localization patches. Replace it with custom text,
+keeping positional tokens such as `{0}` and `{1}` where needed. The `.text` leaf keeps a
+message distinct from its nested description/lore keys.
+
+The native `Text` API applies its existing typed colors, highlights, hover text and clickable
+arguments after RCUI resolves the content. MiniMessage styling inside these native string
+overrides is flattened at this compatibility boundary. Player arguments remain literal text.
+Cloud command-help, command-error and startup-error entries under `cloud`/`system` use safe
+Adventure components directly and retain RCUI MiniMessage styling. Third-party structure
+types with new, unbundled translation keys retain their native localization fallback.
+
+Apply centralized message/button changes with `/rcui reload`; invalid RCUI catalogs retain
+their last valid state. A malformed native positional pattern also retains its last valid
+value and logs the affected key. The native restart command continues to reload native
+configuration/localization patches. Native failure listeners can use plain diagnostics when
+the presentation bridge is unavailable. An RCUI dependency or registration startup failure
+is reported in Paper's server log.
+
+RCUI and Paper provide the shared Adventure API. These public types are neither shaded nor
+relocated in RCDoors, so RCUI calls and Paper audiences use the same runtime classes.
+
+`/rcdoors help [search] [page]` shows eight permitted commands per page, with clickable navigation
+and command suggestions. Hidden commands and commands unavailable to the sender are omitted.
+Help rows, argument descriptions, pagination and all command failure categories use the RCUI
+`cloud.help.*` and `cloud.exception.*` catalog. Cloud parsing remains native; its obsolete Adventure4
+presentation extras are excluded so errors and help use Paper26.2 Adventure5 safely.

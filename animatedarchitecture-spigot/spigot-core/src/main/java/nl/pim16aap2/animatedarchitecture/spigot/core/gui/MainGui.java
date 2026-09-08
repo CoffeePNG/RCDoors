@@ -121,7 +121,7 @@ class MainGui implements IGuiPage.IGuiStructureDeletionListener
             guiSetup
         );
         gui.setCloseAction(GuiUtil.getDeletionListenerUnregisterCloseAction(deletionManager, this));
-        gui.setFiller(FILLER);
+        gui.setFiller(GuiUtil.skin(animatedArchitecturePlugin, "main", "filler", FILLER));
 
         populateGUI(gui);
 
@@ -141,7 +141,7 @@ class MainGui implements IGuiPage.IGuiStructureDeletionListener
         {
             final StaticGuiElement guiElement = new StaticGuiElement(
                 'e',
-                new ItemStack(config.getGuiMaterial(structure.structure().getType())),
+                GuiUtil.skin(animatedArchitecturePlugin, "main", "structure-entry", new ItemStack(config.getGuiMaterial(structure.structure().getType()))),
                 click ->
                 {
                     selectedStructure = structure.structure();
@@ -158,26 +158,26 @@ class MainGui implements IGuiPage.IGuiStructureDeletionListener
             );
             group.addElement(guiElement);
         }
-        group.setFiller(FILLER);
+        group.setFiller(GuiUtil.skin(animatedArchitecturePlugin, "main", "filler", FILLER));
         gui.addElement(group);
     }
 
     private void addHeader(InventoryGui gui)
     {
         gui.addElement(new GuiPageElement(
-            'f', new ItemStack(Material.ARROW), GuiPageElement.PageAction.FIRST,
+            'f', GuiUtil.skin(animatedArchitecturePlugin, "main", "first-page", new ItemStack(Material.ARROW)), GuiPageElement.PageAction.FIRST,
             localizer.getMessage("gui.main_page.nav.first_page")));
 
         //noinspection SpellCheckingInspection
         gui.addElement(new GuiPageElement(
             'p',
-            new ItemStack(Material.BIRCH_SIGN), GuiPageElement.PageAction.PREVIOUS,
+            GuiUtil.skin(animatedArchitecturePlugin, "main", "previous-page", new ItemStack(Material.BIRCH_SIGN)), GuiPageElement.PageAction.PREVIOUS,
             localizer.getMessage("gui.main_page.nav.previous_page", "%prevpage%", "%pages%"))
         );
 
         gui.addElement(new StaticGuiElement(
             'h',
-            new ItemStack(Material.WRITABLE_BOOK),
+            GuiUtil.skin(animatedArchitecturePlugin, "main", "create-structure", new ItemStack(Material.WRITABLE_BOOK)),
             click ->
             {
                 createStructureGuiFactory.newCreateStructureGui(inventoryHolder);
@@ -188,20 +188,20 @@ class MainGui implements IGuiPage.IGuiStructureDeletionListener
 
         //noinspection SpellCheckingInspection
         gui.addElement(new GuiPageElement(
-            'n', new ItemStack(Material.BIRCH_SIGN),
+            'n', GuiUtil.skin(animatedArchitecturePlugin, "main", "next-page", new ItemStack(Material.BIRCH_SIGN)),
             GuiPageElement.PageAction.NEXT,
             localizer.getMessage("gui.main_page.nav.next_page", "%nextpage%", "%pages%"))
         );
 
         gui.addElement(new GuiPageElement(
-            'l', new ItemStack(Material.ARROW),
+            'l', GuiUtil.skin(animatedArchitecturePlugin, "main", "last-page", new ItemStack(Material.ARROW)),
             GuiPageElement.PageAction.LAST,
             localizer.getMessage("gui.main_page.nav.last_page"))
         );
 
         gui.addElement(new StaticGuiElement(
             's',
-            new ItemStack(Material.KNOWLEDGE_BOOK),
+            GuiUtil.skin(animatedArchitecturePlugin, "main", "sort", new ItemStack(Material.KNOWLEDGE_BOOK)),
             click ->
             {
                 sortingMethod = sortingMethod.next();

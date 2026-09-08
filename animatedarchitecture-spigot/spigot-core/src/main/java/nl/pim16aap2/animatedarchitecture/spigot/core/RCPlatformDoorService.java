@@ -82,7 +82,7 @@ final class RCPlatformDoorService
     for (Policy policy : policies.values()) {
       Decision decision;
       try {
-        decision = policy.check(id, actor, action);
+        decision = java.util.Objects.requireNonNull(policy.check(id, actor, action));
       } catch (RuntimeException failure) {
         return Decision.DENY;
       }
@@ -117,6 +117,9 @@ final class RCPlatformDoorService
   @Override
   public synchronized boolean releaseClaim(
       org.bukkit.plugin.Plugin owner, String doorId, String organizationId) {
+    var parsed = parseStructureUid(new DoorId(doorId));
+    if (parsed.isEmpty()) return false;
+    doorId = Long.toString(parsed.orElseThrow());
     Claim expected = new Claim(owner.getName(), organizationId);
     Claim prior = doorClaims.get(doorId);
     if (prior == null) return true;
@@ -177,7 +180,19 @@ final class RCPlatformDoorService
   @org.bukkit.event.EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
   public void beforeToggle(
       nl.pim16aap2.animatedarchitecture.spigot.core.events.StructureEventTogglePrepare event) {
-    if (event.getResponsible() == null) return;
+    String id = Long.toString(event.getSnapshot().getUid());
+    boolean claimed = doorClaims.containsKey(id);
+    // Native redstone/proximity substitute the prime owner for the actual trigger actor.
+    // Only direct player actions and trusted server operations can operate organization assets.
+    if (claimed && event.getCause() != StructureActionCause.PLAYER
+        && event.getCause() != StructureActionCause.SERVER) {
+      event.setCancelled(true);
+      return;
+    }
+    if (event.getResponsible() == null) {
+      if (claimed && event.getCause() != StructureActionCause.SERVER) event.setCancelled(true);
+      return;
+    }
     Decision decision =
         access(
             new DoorId(Long.toString(event.getSnapshot().getUid())),

@@ -1,0 +1,956 @@
+# Native Doors messages managed by RCUI in namespace rcdoors.
+# <native> preserves the selected language and upstream localization patches.
+# Each native key has a .text leaf so keys with child keys remain distinct in YAML.
+# Replace a value to override it centrally; retain positional {0}, {1}, ... tokens.
+# Native Text keeps its existing typed colors/click actions; MiniMessage styling is flattened.
+prefix: ''
+legacy-prefixes: []
+removed-paths: []
+
+# Native English: You are now a(n) {0} of {1} {2}!
+commands.add_owner.added_player_notification.text: '<native>'
+
+# Native English: Type "/rcdoors AddOwner <playerName> [permission]" in chat. Replace "<playerName>" by the name of the player you want to add as owner.
+commands.add_owner.delayed.init.text: '<native>'
+
+# Native English: Add another owner to a structure.
+commands.add_owner.description.text: '<native>'
+
+# Native English: You cannot only add co-owners with a higher permission level!
+commands.add_owner.error.cannot_assign_below_self.text: '<native>'
+
+# Native English: Target permission level {0} is invalid!
+commands.add_owner.error.invalid_target_permission.text: '<native>'
+
+# Native English: You are not allowed to add co-owners to this {0}!
+commands.add_owner.error.not_allowed.text: '<native>'
+
+# Native English: You are not an owner of this {0}!
+commands.add_owner.error.not_an_owner.text: '<native>'
+
+# Native English: ''{0}'' is already a (co-)owner of this {1}!
+commands.add_owner.error.target_already_owner.text: '<native>'
+
+# Native English: You cannot change the permission level of this player!
+commands.add_owner.error.targeting_prime_owner.text: '<native>'
+
+# Native English: The permission level of the new owner.
+commands.add_owner.param.permission_level.description.text: '<native>'
+
+# Native English: {0} is now a(n) {1} of the {2}!
+commands.add_owner.success.text: '<native>'
+
+# Native English: The intended action was cancelled!
+commands.base.error.action_cancelled.text: '<native>'
+
+# Native English: Cancelled waiting for command: {0}
+commands.base.error.cancelled.text: '<native>'
+
+# Native English: Could not find the provided structure!
+commands.base.error.cannot_find_target_structure.text: '<native>'
+
+# Native English: Failed to execute command! Please contact an administrator!
+commands.base.error.generic.text: '<native>'
+
+# Native English: Failed to process input: We are not waiting for any input!
+commands.base.error.no_pending_process.text: '<native>'
+
+# Native English: You do not have permission to use this command!
+commands.base.error.no_permission_for_command.text: '<native>'
+
+# Native English: We are not currently waiting for command input! Your input will be ignored!
+commands.base.error.not_waiting.text: '<native>'
+
+# Native English: Only players can use this command!
+commands.base.error.only_available_for_players.text: '<native>'
+
+# Native English: Timed out waiting for input for command: {0}
+commands.base.error.timed_out.text: '<native>'
+
+# Native English: Cancels any process waiting for your input.
+commands.cancel.description.text: '<native>'
+
+# Native English: We are not waiting for anything! Nothing was cancelled.
+commands.cancel.no_process.text: '<native>'
+
+# Native English: The process has been cancelled!
+commands.cancel.success.text: '<native>'
+
+# Native English: Closes a structure if it can be closed.
+commands.close.description.text: '<native>'
+
+# Native English: Confirms an action RCDoors wants to perform.
+commands.confirm.description.text: '<native>'
+
+# Native English: There is nothing to confirm!
+commands.confirm.error.no_confirmation_request.text: '<native>'
+
+# Native English: Writes debug information to the console.
+commands.debug.description.text: '<native>'
+
+# Native English: The debug information has been written to the console!
+commands.debug.success.text: '<native>'
+
+# Native English: Deletes a structure.
+commands.delete.description.text: '<native>'
+
+# Native English: {0} {1} has been deleted.
+commands.delete.success.text: '<native>'
+
+# Native English: Prints the information of a structure.
+commands.info.description.text: '<native>'
+
+# Native English: Blocks to Move: {0}
+commands.info.output.blocks_to_move.text: '<native>'
+
+# Native English: Information about {0} {1}:
+commands.info.output.header.text: '<native>'
+
+# Native English: Location: Min {0} Max {1}
+commands.info.output.location.text: '<native>'
+
+# Native English: Locked Status: {0}
+commands.info.output.locked_status.text: '<native>'
+
+# Native English: Open direction: {0}
+commands.info.output.open_direction.text: '<native>'
+
+# Native English: Open status: {0}
+commands.info.output.open_status.text: '<native>'
+
+# Native English: Power block: {0}
+commands.info.output.power_block_location.text: '<native>'
+
+# Native English: Prime Owner: {0}
+commands.info.output.prime_owner.text: '<native>'
+
+# Native English: Your access level: {0}
+commands.info.output.your_access_level.text: '<native>'
+
+# Native English: Gives you a tool to inspect which structures are associated with a powerblock.
+commands.inspect_power_block.description.text: '<native>'
+
+# Native English: Lists all structures based on some criteria.
+commands.list_structures.description.text: '<native>'
+
+# Native English: No structures were found!
+commands.list_structures.error.no_structures_found.text: '<native>'
+
+# Native English: List of structures:
+commands.list_structures.structure_list_header.text: '<native>'
+
+# Native English: (Un)locks a structure.
+commands.lock.description.text: '<native>'
+
+# Native English: {0} {1} has been locked.
+commands.lock.success.locked.text: '<native>'
+
+# Native English: {0} {1} has been unlocked.
+commands.lock.success.unlocked.text: '<native>'
+
+# Native English: Opens the GUI.
+commands.menu.description.text: '<native>'
+
+# Native English: You do not have permission to access the menus of other users!
+commands.menu.no_permission_for_others.text: '<native>'
+
+# Native English: Moves the powerblock to a different location.
+commands.move_power_block.description.text: '<native>'
+
+# Native English: Creates a new structure.
+commands.new_structure.description.text: '<native>'
+
+# Native English: Opens a structure if it can be opened.
+commands.open.description.text: '<native>'
+
+# Native English: Previews an animation using glowing blocks.
+commands.preview.description.text: '<native>'
+
+# Native English: Type "/rcdoors RemoveOwner <playerName>" in chat. Replace "<playerName>" by the name of the player you want to remove as owner.
+commands.remove_owner.delayed.init.text: '<native>'
+
+# Native English: Removes an owner of a structure.
+commands.remove_owner.description.text: '<native>'
+
+# Native English: You can only remove (co)owners with a higher permission level than yourself!
+commands.remove_owner.error.cannot_remove_lower_permission.text: '<native>'
+
+# Native English: You are not allowed to remove co-owners from this {0}!
+commands.remove_owner.error.not_allowed.text: '<native>'
+
+# Native English: You are not an owner of this {0}!
+commands.remove_owner.error.not_an_owner.text: '<native>'
+
+# Native English: ''{0}'' is not a (co-)owner of {1} {2}
+commands.remove_owner.error.target_not_an_owner.text: '<native>'
+
+# Native English: You are no longer an owner of {0} {1}!
+commands.remove_owner.removed_player_notification.text: '<native>'
+
+# Native English: {0} is no longer an owner of the {1}!
+commands.remove_owner.success.text: '<native>'
+
+# Native English: Restarts the plugin.
+commands.restart.description.text: '<native>'
+
+# Native English: The plugin could not be restarted!
+commands.restart.error.text: '<native>'
+
+# Native English: The plugin has been restarted!
+commands.restart.success.text: '<native>'
+
+# Native English: Applies an action to the block selection of your active creation process.
+commands.select_blocks.description.text: '<native>'
+
+# Native English: ''{0}'' is not a valid selection action!
+commands.select_blocks.error.invalid_action.text: '<native>'
+
+# Native English: You do not have an active creation process to select blocks for!
+commands.select_blocks.error.no_selection_process.text: '<native>'
+
+# Native English: Type "/rcdoors SetBlocksToMove <distance>" in chat. Replace "<distance>" by the number of blocks that you want the structure to attempt to move.\nAny value lower than 1 will make the structure use default values.
+commands.set_blocks_to_move.delayed.init.text: '<native>'
+
+# Native English: Changes the number of blocks a structure will move for supported types.
+commands.set_blocks_to_move.description.text: '<native>'
+
+# Native English: {0} {1} does not have the blocks to move property!
+commands.set_blocks_to_move.error.invalid_structure_type.text: '<native>'
+
+# Native English: {0} {1} is already {2}! Nothing was changed!
+commands.set_blocks_to_move.error.status_not_changed.text: '<native>'
+
+# Native English: Updated the number of blocks {0} {1} will move!
+commands.set_blocks_to_move.success.text: '<native>'
+
+# Native English: Sets the name of a structure during the creation process.
+commands.set_name.description.text: '<native>'
+
+# Native English: Type "/rcdoors SetOpenDirection <direction>" in chat. Replace "<direction>" by a direction.
+commands.set_open_direction.delayed.init.text: '<native>'
+
+# Native English: Please select one of the following directions:
+commands.set_open_direction.delayed_init_header.text: '<native>'
+
+# Native English: Changes the opening direction of a structure.
+commands.set_open_direction.description.text: '<native>'
+
+# Native English: {0} is not a valid rotation direction for {1} {2}!
+commands.set_open_direction.error.invalid_rotation.text: '<native>'
+
+# Native English: The opening direction of {0} {1} has been updated!
+commands.set_open_direction.success.text: '<native>'
+
+# Native English: Type "/rcdoors SetOpenStatus <status>" in chat. Replace "<status>" by the new status.
+commands.set_open_status.delayed.init.text: '<native>'
+
+# Native English: Changes the open status of a structure without actually moving it.
+commands.set_open_status.description.text: '<native>'
+
+# Native English: {0} {1} does not have the open status property!
+commands.set_open_status.error.missing_property.text: '<native>'
+
+# Native English: {0} {1} is already {2}! Nothing was changed!
+commands.set_open_status.error.status_not_changed.text: '<native>'
+
+# Native English: The open status of {0} {1} has been updated!
+commands.set_open_status.success.text: '<native>'
+
+# Native English: Type "/rcdoors SetProximity <radius>" in chat. Replace "<radius>" by the distance in blocks at which a nearby player should open the structure.\nUse 0 to switch proximity opening off again.
+commands.set_proximity.delayed.init.text: '<native>'
+
+# Native English: Changes the distance at which a nearby player opens a structure.
+commands.set_proximity.description.text: '<native>'
+
+# Native English: {0} {1} does not support proximity opening!
+commands.set_proximity.error.invalid_structure_type.text: '<native>'
+
+# Native English: ''{0}'' is not a valid radius! Use 0 to switch proximity opening off.
+commands.set_proximity.error.negative_radius.text: '<native>'
+
+# Native English: A radius of {0} blocks is too large! This server allows at most {1} blocks.
+commands.set_proximity.error.radius_too_large.text: '<native>'
+
+# Native English: {0} {1} already opens at {2} blocks! Nothing was changed!
+commands.set_proximity.error.status_not_changed.text: '<native>'
+
+# Native English: {0} {1} now opens when a player comes within {2} blocks of it.
+commands.set_proximity.success.text: '<native>'
+
+# Native English: {0} {1} no longer opens for nearby players.
+commands.set_proximity.success.disabled.text: '<native>'
+
+# Native English: Used to help resolve ambiguity.
+commands.specify.description.text: '<native>'
+
+# Native English: You don't have any pending commands.
+commands.spigot.confirmation.error.no_pending.text: '<native>'
+
+# Native English: Confirmation required. {0}.
+commands.spigot.confirmation.message.text: '<native>'
+
+# Native English: Click to confirm!
+commands.spigot.confirmation.message.arg0.hint.text: '<native>'
+
+# Native English: Confirm
+commands.spigot.confirmation.message.arg0.message.text: '<native>'
+
+# Native English: Stops all active structures on the server.
+commands.stop_structures.description.text: '<native>'
+
+# Native English: All active structures have been stopped!
+commands.stop_structures.success.text: '<native>'
+
+# Native English: This {0} does not have the required properties to perform this action: {1}
+commands.structure_target_command.base.error.missing_properties.text: '<native>'
+
+# Native English: You do not have access to this action for this {0}!
+commands.structure_target_command.base.error.no_permission_for_action.text: '<native>'
+
+# Native English: Failed to find the specified structure!
+commands.structure_target_command.base.error.structure_not_found.text: '<native>'
+
+# Native English: Toggles a structure.
+commands.toggle.description.text: '<native>'
+
+# Native English: {0} {1} cannot be toggled because it is already closed!
+commands.toggle.error.already_closed.text: '<native>'
+
+# Native English: {0} {1} cannot be opened because it is already open!
+commands.toggle.error.already_open.text: '<native>'
+
+# Native English: {0} {1} cannot be toggled!
+commands.toggle.error.cannot_toggle.text: '<native>'
+
+# Native English: You are not allowed to toggle {0} {1}!
+commands.toggle.error.no_access.text: '<native>'
+
+# Native English: No structures were specified! Please specify at least 1 structure!
+commands.toggle.error.not_enough_structures.text: '<native>'
+
+# Native English: There is no active creator process!
+commands.update_creator.error.no_creator_process.text: '<native>'
+
+# Native English: Prints the version of RCDoors you are using.
+commands.version.description.text: '<native>'
+
+# Native English: You are currently using RCDoors version {0}.
+commands.version.success.text: '<native>'
+
+# Native English: An error occurred! Please contact a server admin!
+constants.error.generic.text: '<native>'
+
+# Native English: Locked
+constants.locked_status.locked.text: '<native>'
+
+# Native English: Unlocked
+constants.locked_status.unlocked.text: '<native>'
+
+# Native English: Clockwise
+constants.movement_direction.clockwise.text: '<native>'
+
+# Native English: Counterclockwise
+constants.movement_direction.counterclockwise.text: '<native>'
+
+# Native English: Down
+constants.movement_direction.down.text: '<native>'
+
+# Native English: East
+constants.movement_direction.east.text: '<native>'
+
+# Native English: None
+constants.movement_direction.none.text: '<native>'
+
+# Native English: North
+constants.movement_direction.north.text: '<native>'
+
+# Native English: South
+constants.movement_direction.south.text: '<native>'
+
+# Native English: Up
+constants.movement_direction.up.text: '<native>'
+
+# Native English: West
+constants.movement_direction.west.text: '<native>'
+
+# Native English: Closed
+constants.open_status.closed.text: '<native>'
+
+# Native English: Open
+constants.open_status.open.text: '<native>'
+
+# Native English: Admin
+constants.permission_level.admin.text: '<native>'
+
+# Native English: Creator
+constants.permission_level.creator.text: '<native>'
+
+# Native English: No Permission
+constants.permission_level.no_permission.text: '<native>'
+
+# Native English: User
+constants.permission_level.user.text: '<native>'
+
+# Native English: {0} "{1}" is already closed!
+constants.structure_toggle_result.already_closed.text: '<native>'
+
+# Native English: {0} "{1}" is already open!
+constants.structure_toggle_result.already_open.text: '<native>'
+
+# Native English: Request to toggle {0} "{1}" was cancelled!
+constants.structure_toggle_result.cancelled.text: '<native>'
+
+# Native English: {0} "{1}" cannot skip its animation!
+constants.structure_toggle_result.cannot_skip.text: '<native>'
+
+# Native English: Failed to toggle {0} "{1}"!
+constants.structure_toggle_result.generic_toggle_failure.text: '<native>'
+
+# Native English: {0} "{1}" could not be toggled!
+constants.structure_toggle_result.invalid_state.text: '<native>'
+
+# Native English: Could not find an open direction for {0} "{1}"!
+constants.structure_toggle_result.no_direction.text: '<native>'
+
+# Native English: You are not allowed to move {0} "{1}" in this region!
+constants.structure_toggle_result.no_permission_for_location.text: '<native>'
+
+# Native English: No structures found!
+constants.structure_toggle_result.no_structures_found.text: '<native>'
+
+# Native English: {0} "{1}" is obstructed!
+constants.structure_toggle_result.obstructed.text: '<native>'
+
+# Native English: {0} "{1}" is busy! Try again later.
+constants.structure_toggle_result.structure_is_busy.text: '<native>'
+
+# Native English: {0} "{1}" is locked!
+constants.structure_toggle_result.structure_is_locked.text: '<native>'
+
+# Native English: Success!
+constants.structure_toggle_result.success.text: '<native>'
+
+# Native English: {0} "{1}" is too big to toggle!
+constants.structure_toggle_result.too_big.text: '<native>'
+
+# Native English: The structure type "{0}" is disabled!
+constants.structure_toggle_result.type_disabled.text: '<native>'
+
+# Native English: This {0} will cost {1,number,#.##}. {2} / {3}.
+creator.base.confirm_structure_price.text: '<native>'
+
+# Native English: Click to buy this structure!
+creator.base.confirm_structure_price.arg2.hint.text: '<native>'
+
+# Native English: Accept
+creator.base.confirm_structure_price.arg2.message.text: '<native>'
+
+# Native English: Click to abort the creation process!
+creator.base.confirm_structure_price.arg3.hint.text: '<native>'
+
+# Native English: Refuse
+creator.base.confirm_structure_price.arg3.message.text: '<native>'
+
+# Native English: You are not allowed to create a {0} this big. You selected {1} blocks, but you are limited to {2,number,#.#} blocks!
+creator.base.error.area_too_big.text: '<native>'
+
+# Native English: That block is outside the region you selected with the two corners! Only blocks inside the region can be part of the structure.
+creator.base.error.block_outside_region.text: '<native>'
+
+# Native English: The number of blocks you want this {0} to move exceeds the limit!\nYou selected {1} blocks, while your limit is only {2} blocks!
+creator.base.error.blocks_to_move_too_far.text: '<native>'
+
+# Native English: The creation process has been cancelled.
+creator.base.error.creation_cancelled.text: '<native>'
+
+# Native English: You have insufficient funds to create this {0}! You'd need ${1,number,#.##}.
+creator.base.error.insufficient_funds.text: '<native>'
+
+# Native English: ''{0}'' is not a valid name for a {1}! Please try again.
+creator.base.error.invalid_name.text: '<native>'
+
+# Native English: ''{0}'' is not a valid option! Please try again.
+creator.base.error.invalid_option.text: '<native>'
+
+# Native English: Invalid rotation point selected! Try again!
+creator.base.error.invalid_rotation_point.text: '<native>'
+
+# Native English: You cannot place powerblocks inside their own {0}!
+creator.base.error.powerblock_inside_structure.text: '<native>'
+
+# Native English: The powerblock is too far from the {0}!\nIt is {1} blocks from the {0}, while your limit is only {2} blocks!
+creator.base.error.powerblock_too_far.text: '<native>'
+
+# Native English: Time's up! Creation was aborted, please try again.
+creator.base.error.timed_out.text: '<native>'
+
+# Native English: Invalid world selected!
+creator.base.error.world_mismatch.text: '<native>'
+
+# Native English: Step 1: give your {0} a name. Click {1} to start the command, then type the name and press enter.
+creator.base.give_name.text: '<native>'
+
+# Native English: /rcdoors setname
+creator.base.give_name.command.text: '<native>'
+
+# Native English: Click to put the command in your chat box, then add a name!
+creator.base.give_name.hint.text: '<native>'
+
+# Native English: Process initiated! You have 15 minutes to complete this process!\nIf you wish to cancel the process sooner, run the {0} command.
+creator.base.init.text: '<native>'
+
+# Native English: {0} has been withdrawn from your account.
+creator.base.money_withdrawn.text: '<native>'
+
+# Native English: The selected position is not in a corner!
+creator.base.position_not_in_corner.text: '<native>'
+
+# Native English: Processing your creation. Please wait for the final receipt.
+creator.base.processing.text: '<native>'
+
+# Native English: Blocks to move: {0}
+creator.base.property.blocks_to_move.text: '<native>'
+
+# Native English: Coordinates: {0}
+creator.base.property.cuboid.text: '<native>'
+
+# Native English: Click here to change this!
+creator.base.property.info.clickable_message.text: '<native>'
+
+# Native English: Open direction: {0}
+creator.base.property.open_direction.text: '<native>'
+
+# Native English: Open status: {0}
+creator.base.property.open_status.text: '<native>'
+
+# Native English: Powerblock: {0}
+creator.base.property.power_block_position.text: '<native>'
+
+# Native English: Rotation Point: {0}
+creator.base.property.rotation_point.text: '<native>'
+
+# Native English: Selected blocks: {0}
+creator.base.property.selected_blocks.text: '<native>'
+
+# Native English: the whole region
+creator.base.property.selected_blocks.whole_region.text: '<native>'
+
+# Native English: Structure Type: {0}
+creator.base.property.type.text: '<native>'
+
+# Native English: You have been given a {0} Creator Stick!
+creator.base.received_tool.text: '<native>'
+
+# Native English: {0} / {1}
+creator.base.review_result.footer.text: '<native>'
+
+# Native English: Click to finish the creation process!
+creator.base.review_result.footer.arg0.hint.text: '<native>'
+
+# Native English: Confirm
+creator.base.review_result.footer.arg0.message.text: '<native>'
+
+# Native English: Click to cancel the creation process!
+creator.base.review_result.footer.arg1.hint.text: '<native>'
+
+# Native English: Cancel
+creator.base.review_result.footer.arg1.message.text: '<native>'
+
+# Native English: Almost done! Please review these settings:
+creator.base.review_result.header.text: '<native>'
+
+# Native English: This type requires a '2d' area, but the selected area does not meet this constraint!\nPlease make sure that the selected area has a depth of 1 block in 1 dimension.
+creator.base.second_pos_not_2d.text: '<native>'
+
+# Native English: Now pick the blocks of your {0}: left-click a block to add it, right-click it to remove it again. Only the blocks you pick will be animated, so you can build shapes that are not a solid box.
+creator.base.select_blocks.text: '<native>'
+
+# Native English: Clear
+creator.base.select_blocks.action.clear.text: '<native>'
+
+# Native English: Click to deselect every block.
+creator.base.select_blocks.action.clear.hint.text: '<native>'
+
+# Native English: Done
+creator.base.select_blocks.action.done.text: '<native>'
+
+# Native English: Click when you have selected every block of your structure. Selecting nothing uses the whole region.
+creator.base.select_blocks.action.done.hint.text: '<native>'
+
+# Native English: Use whole region
+creator.base.select_blocks.action.fill.text: '<native>'
+
+# Native English: Click to select every block in the region, like structures worked before.
+creator.base.select_blocks.action.fill.hint.text: '<native>'
+
+# Native English: Undo
+creator.base.select_blocks.action.undo.text: '<native>'
+
+# Native English: Click to undo your last click.
+creator.base.select_blocks.action.undo.hint.text: '<native>'
+
+# Native English: {0} | {1} | {2} | {3}
+creator.base.select_blocks.actions.text: '<native>'
+
+# Native English: Selected {0} of the {1} blocks in the region.
+creator.base.select_blocks.status.text: '<native>'
+
+# Native English: Please specify which way you want the {0} to open. These are your options:
+creator.base.set_open_direction.text: '<native>'
+
+# Native English: Click to use this direction!
+creator.base.set_open_direction.arg0.hint.text: '<native>'
+
+# Native English: Please specify if this {0} is currently {1} or {2}.
+creator.base.set_open_status.text: '<native>'
+
+# Native English: Click to set to ''closed''.
+creator.base.set_open_status.arg2.closed.hint.text: '<native>'
+
+# Native English: Click to set to ''open''.
+creator.base.set_open_status.arg2.open.hint.text: '<native>'
+
+# Native English: Left-click the block that should become the powerblock. A redstone signal on this block toggles the structure, so pick a spot you can reach.
+creator.base.set_power_block.text: '<native>'
+
+# Native English: {0} creation successful!
+creator.base.success.text: '<native>'
+
+# Native English: Step 1/3: Please select the first corner of the {0}.
+creator.big_door.step_1.text: '<native>'
+
+# Native English: Step 2/3: First point selected! Please select a second point!\nThe second point should be as far away from the first point while still being part of the {0}.
+creator.big_door.step_2.text: '<native>'
+
+# Native English: Step 3/3: Second point selected! Please select the rotation point (aka the hinge).\nThis is the column of blocks around which the entire {0} will rotate.
+creator.big_door.step_3.text: '<native>'
+
+# Native English: This tool is used to create a big door.
+creator.big_door.stick_lore.text: '<native>'
+
+# Native English: Invalid hour arm side!
+creator.clock.error.invalid_hour_arm_side.text: '<native>'
+
+# Native English: The depth of this {0} should be 2, but it was: {1}!
+creator.clock.error.not_2_deep.text: '<native>'
+
+# Native English: The selected dimensions of the clock face ({0} by {1}) are not odd!
+creator.clock.error.not_odd.text: '<native>'
+
+# Native English: The selected dimensions of the clock face ({0} by {1}) do not form a square!
+creator.clock.error.not_square.text: '<native>'
+
+# Native English: The selected area ({1} by {2}) is too small! A {0} must be at least 3x3!
+creator.clock.error.too_small.text: '<native>'
+
+# Native English: Step 1/3: Please select the first corner of the {0}.
+creator.clock.step_1.text: '<native>'
+
+# Native English: Step 2/3: First point selected! Please select a second point!\nThe second point should be as far away from the first point while still being part of the {0}.\nNote that the clocks have a few requirements:\nIt must be 2 blocks deep, square, and an odd number of blocks tall.
+creator.clock.step_2.text: '<native>'
+
+# Native English: Step 3/3: Second point selected! Please specify where the hour arm should be. Just select any block on the desired side of the {0}.
+creator.clock.step_3.text: '<native>'
+
+# Native English: This tool is used to create a clock.
+creator.clock.stick_lore.text: '<native>'
+
+# Native English: Step 1/3: Please select the first corner of the {0}.
+creator.draw_bridge.step_1.text: '<native>'
+
+# Native English: Step 2/3: First point selected! Please select a second point!\nThe second point should be as far away from the first point while still being part of the {0}.
+creator.draw_bridge.step_2.text: '<native>'
+
+# Native English: Step 3/3: Second point selected! Please select the rotation point (aka the hinge).
+creator.draw_bridge.step_3.text: '<native>'
+
+# Native English: This tool is used to create a drawbridge.
+creator.draw_bridge.stick_lore.text: '<native>'
+
+# Native English: Step 1/3: Please select the first corner of the {0}.
+creator.flag.step_1.text: '<native>'
+
+# Native English: Step 2/3: First point selected! Please select a second point!\nThe second point should be as far away from the first point while still being part of the {0}.\nNote that the resulting area has to be 1 block deep in either the x or z axis.
+creator.flag.step_2.text: '<native>'
+
+# Native English: Step 3/3: Second point selected! Please select the point where the {0} is attached to the pole. This has to be a corner of the selected area!
+creator.flag.step_3.text: '<native>'
+
+# Native English: This tool is used to create a flag.
+creator.flag.stick_lore.text: '<native>'
+
+# Native English: Step 1/2: Please select the first corner of the {0}.
+creator.garage_door.step_1.text: '<native>'
+
+# Native English: Step 2/2: First point selected! Please select a second point!\nThe second point should be as far away from the first point while still being part of the {0}.
+creator.garage_door.step_2.text: '<native>'
+
+# Native English: This tool is used to create a garage door.
+creator.garage_door.stick_lore.text: '<native>'
+
+# Native English: Almost there! Please select how many blocks you want this {0} to move using "/rcdoors SetBlocksToMove <value>".
+creator.portcullis.set_blocks_to_move.text: '<native>'
+
+# Native English: Step 1/2: Please select the first corner of the {0}.
+creator.portcullis.step_1.text: '<native>'
+
+# Native English: Step 2/2: First point selected! Please select a second point!\nThe second point should be as far away from the first point while still being part of the {0}.
+creator.portcullis.step_2.text: '<native>'
+
+# Native English: This tool is used to create a portcullis.
+creator.portcullis.stick_lore.text: '<native>'
+
+# Native English: Step 1/3: Please select the first corner of the {0}.
+creator.revolving_door.step_1.text: '<native>'
+
+# Native English: Step 2/3: First point selected! Please select a second point!\nThe second point should be as far away from the first point while still being part of the {0}.
+creator.revolving_door.step_2.text: '<native>'
+
+# Native English: Step 3/3: Second point selected! Please select a first rotation point (aka the hinge).\nThis is the column of blocks around which the entire {0} will swing.
+creator.revolving_door.step_3.text: '<native>'
+
+# Native English: This tool is used to create a revolving door.
+creator.revolving_door.stick_lore.text: '<native>'
+
+# Native English: Almost there! Please select how many blocks you want this {0} to move using "/rcdoors SetBlocksToMove <value>".
+creator.sliding_door.set_blocks_to_move.text: '<native>'
+
+# Native English: Step 1/2: Please select the first corner of the {0}.
+creator.sliding_door.step_1.text: '<native>'
+
+# Native English: Step 2/2: First point selected! Please select a second point!\nThe second point should be as far away from the first point while still being part of the {0}.
+creator.sliding_door.step_2.text: '<native>'
+
+# Native English: This tool is used to create a Sliding Door.
+creator.sliding_door.stick_lore.text: '<native>'
+
+# Native English: Step 1/3: Please select the first corner of the {0}.
+creator.windmill.step_1.text: '<native>'
+
+# Native English: Step 2/3: First point selected! Please select a second point!\nThe second point should be as far away from the first point while still being part of the {0}.
+creator.windmill.step_2.text: '<native>'
+
+# Native English: Step 3/3: Second point selected! Please select a first rotation point (aka the hinge).\nThis is the column of blocks around which the entire {0} will rotate.
+creator.windmill.step_3.text: '<native>'
+
+# Native English: This tool is used to create a windmill.
+creator.windmill.stick_lore.text: '<native>'
+
+# Native English: No, keep this {0}
+gui.delete_page.cancel.text: '<native>'
+
+# Native English: Yes, delete this {0}
+gui.delete_page.confirm.text: '<native>'
+
+# Native English: Delete {0} "{1}"
+gui.delete_page.title.text: '<native>'
+
+# Native English: Add an owner.
+gui.info_page.attribute.add_owner.text: '<native>'
+
+# Native English: Change the number of blocks this {0} will move.
+gui.info_page.attribute.blocks_to_move.text: '<native>'
+
+# Native English: Delete this {0}.
+gui.info_page.attribute.delete.text: '<native>'
+
+# Native English: Print the information of this {0}.
+gui.info_page.attribute.info.text: '<native>'
+
+# Native English: Lock this {0}.
+gui.info_page.attribute.lock.text: '<native>'
+
+# Native English: Change the opening direction of this {0}.
+gui.info_page.attribute.open_direction.text: '<native>'
+
+# Native English: The current opening direction is {0}.
+gui.info_page.attribute.open_direction.lore.text: '<native>'
+
+# Native English: Preview the animation of this {0}
+gui.info_page.attribute.preview.text: '<native>'
+
+# Native English: Change the distance at which this {0} opens for nearby players.
+gui.info_page.attribute.proximity_radius.text: '<native>'
+
+# Native English: Relocate the powerblock of this {0}.
+gui.info_page.attribute.relocate_power_block.text: '<native>'
+
+# Native English: Remove an owner.
+gui.info_page.attribute.remove_owner.text: '<native>'
+
+# Native English: Set this {0} to closed.
+gui.info_page.attribute.set_closed.text: '<native>'
+
+# Native English: Set this {0} to open.
+gui.info_page.attribute.set_open.text: '<native>'
+
+# Native English: Switch this {0} on or off.
+gui.info_page.attribute.switch.text: '<native>'
+
+# Native English: Toggle this {0}.
+gui.info_page.attribute.toggle.text: '<native>'
+
+# Native English: Unlock this {0}.
+gui.info_page.attribute.unlock.text: '<native>'
+
+# Native English: Back
+gui.info_page.back_button.text: '<native>'
+
+# Native English: Info menu for {0} "{1}"
+gui.info_page.header.text: '<native>'
+
+# Native English: Info: {0}
+gui.info_page.title.text: '<native>'
+
+# Native English: Sort by name
+gui.main_page.button.sort_by_name.text: '<native>'
+
+# Native English: Sort by type
+gui.main_page.button.sort_by_type.text: '<native>'
+
+# Native English: Sort by uid
+gui.main_page.button.sort_by_uid.text: '<native>'
+
+# Native English: Sorted by name
+gui.main_page.button.sorted_by_name.text: '<native>'
+
+# Native English: Sorted by type
+gui.main_page.button.sorted_by_type.text: '<native>'
+
+# Native English: Sorted by uid
+gui.main_page.button.sorted_by_uid.text: '<native>'
+
+# Native English: Go to the first page
+gui.main_page.nav.first_page.text: '<native>'
+
+# Native English: Go to the last page
+gui.main_page.nav.last_page.text: '<native>'
+
+# Native English: Go to page {0} / {1}
+gui.main_page.nav.next_page.text: '<native>'
+
+# Native English: Go to page {0} / {1}
+gui.main_page.nav.previous_page.text: '<native>'
+
+# Native English: RCDoors Menu
+gui.main_page.title.text: '<native>'
+
+# Native English: Back
+gui.new_structure_page.back_button.text: '<native>'
+
+# Native English: Create a new {0}
+gui.new_structure_page.button.name.text: '<native>'
+
+# Native English: Create a new structure
+gui.new_structure_page.header.text: '<native>'
+
+# Native English: New Structure
+gui.new_structure_page.title.text: '<native>'
+
+# Native English: You no longer have access to structure: {0}!
+gui.notification.structure_inaccessible.text: '<native>'
+
+# Native English: More than 1 structure fits the search parameters! Please specify which one you want to use.
+input_request.specify_structure.header.text: '<native>'
+
+# Native English: UID {0}: {1} {2}. Distance: {3} blocks
+input_request.specify_structure.structure_option.text: '<native>'
+
+# Native English: Click to select this structure.
+input_request.specify_structure.structure_option.info.text: '<native>'
+
+# Native English: Big Door
+structure.type.big_door.text: '<native>'
+
+# Native English: Clock
+structure.type.clock.text: '<native>'
+
+# Native English: Drawbridge
+structure.type.drawbridge.text: '<native>'
+
+# Native English: Flag
+structure.type.flag.text: '<native>'
+
+# Native English: Garage Door
+structure.type.garage_door.text: '<native>'
+
+# Native English: Portcullis
+structure.type.portcullis.text: '<native>'
+
+# Native English: Revolving Door
+structure.type.revolving_door.text: '<native>'
+
+# Native English: Sliding Door
+structure.type.sliding_door.text: '<native>'
+
+# Native English: Windmill
+structure.type.windmill.text: '<native>'
+
+# Native English: Failing to close {0} "{1}"! This structure type can only be toggled!
+structure_action.close.error.type_has_no_open_status.text: '<native>'
+
+# Native English: Failing to open {0} "{1}"! This structure type can only be toggled!
+structure_action.open.error.type_has_no_open_status.text: '<native>'
+
+# Native English: You are not allowed to create structures in this region!
+tool_user.base.error.no_permission_for_location.text: '<native>'
+
+# Native English: [Step {0}/{1}]
+tool_user.base.step_progress.text: '<native>'
+
+# Native English: RCDoors Tool
+tool_user.base.stick_name.text: '<native>'
+
+# Native English: No structures found at the selected location!
+tool_user.power_block_inspected.error.no_structures_found.text: '<native>'
+
+# Native English: The selected location contains the power blocks for these structures:
+tool_user.power_block_inspected.result.header.text: '<native>'
+
+# Native English: You have been given an RCDoors Power Block Inspector Stick! You can use this tool to inspect a powerblock. Just hit a block!
+tool_user.powerblock_inspector.init.text: '<native>'
+
+# Native English: This tool is used to inspect a power block.
+tool_user.powerblock_inspector.stick_lore.text: '<native>'
+
+# Native English: New location is the same as the old position! Nothing changed!
+tool_user.powerblock_relocator.error.location_unchanged.text: '<native>'
+
+# Native English: Invalid Power Block Location selected! The location must be in the same world as the {0}!
+tool_user.powerblock_relocator.error.world_mismatch.text: '<native>'
+
+# Native English: You have been given an RCDoors Relocator stick! You can use this tool to change the location of a powerblock. Just hit a new block!
+tool_user.powerblock_relocator.init.text: '<native>'
+
+# Native English: This tool is used to change the location of a power block.
+tool_user.powerblock_relocator.stick_lore.text: '<native>'
+
+# Native English: Power Block Relocation successful! Don't forget to put a powerblock (default: Gold block) here! Otherwise, it won't work!
+tool_user.powerblock_relocator.success.text: '<native>'
+
+# Cloud command errors already carry safe Adventure components.
+cloud.exception.invalid-syntax.text: '<native>'
+cloud.exception.invalid-sender.text: '<native>'
+cloud.exception.no-permission.text: '<native>'
+cloud.exception.argument-parsing.text: '<native>'
+cloud.exception.command-execution.text: '<native>'
+cloud.exception.decorated.text: '<dark_gray>[<gold>RCDoors</gold>]</dark_gray> <native>'
+system.initialization-error.text: '<red>[RCDoors] Initialization failed: <native>'
+system.unavailable.text: '<yellow>RCDoors is unavailable. Please contact a server administrator.'
+cloud.help.arguments.text: 'Arguments'
+cloud.help.available_commands.text: 'Available Commands'
+cloud.help.click_for_next_page.text: 'Click for next page'
+cloud.help.click_for_previous_page.text: 'Click for previous page'
+cloud.help.click_to_show_help.text: 'Click to show help for this command'
+cloud.help.command.text: 'Command'
+cloud.help.description.text: 'Description'
+cloud.help.help.text: 'Help'
+cloud.help.no_description.text: 'No description'
+cloud.help.no_results_for_query.text: 'No results for query'
+cloud.help.optional.text: 'Optional'
+cloud.help.page_out_of_range.text: 'Page <page> is not in range. Must be between 1 and <max_pages>'
+cloud.help.showing_results_for_query.text: 'Showing search results for query'
+
+cloud.help.entry.text: '<native>'
+cloud.help.page-status.text: '<native>'
+cloud.help.argument-entry.text: '<native>'

@@ -75,6 +75,8 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
     private @Nullable AnimatedArchitectureSpigotPlatform animatedArchitectureSpigotPlatform;
     private @Nullable RegistrationGroup rcPlatformRegistrations;
     private @Nullable RCPlatformDoorService rcPlatformDoorService;
+    @Getter
+    private @Nullable NativePresentation nativePresentation;
     // Avoid creating new Optional objects for every invocation; the result is going to be the same anyway.
     private volatile Optional<IAnimatedArchitecturePlatform> optionalPlatform = Optional.empty();
 
@@ -176,6 +178,7 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
     @Override
     public void onEnable()
     {
+        nativePresentation = new NativePresentation(this);
         log.atInfo().log("Enabling RCDoors %s...", getDescription().getVersion());
 
         // onEnable may be called more than once during the lifetime of the plugin.

@@ -13,6 +13,14 @@ import java.util.Deque;
 @Flogger
 final class GuiUtil
 {
+    static org.bukkit.inventory.ItemStack skin(
+        nl.pim16aap2.animatedarchitecture.spigot.core.AnimatedArchitecturePlugin plugin,
+        String screen, String button, org.bukkit.inventory.ItemStack original)
+    {
+        return java.util.Objects.requireNonNull(plugin.getNativePresentation(), "RCUI presentation")
+            .skin(screen, button, original);
+    }
+
     private GuiUtil()
     {
     }

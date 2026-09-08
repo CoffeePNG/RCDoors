@@ -10,9 +10,19 @@ provides:
   - AnimatedArchitecture
 depend:
   - RCPlatform
+  - RCUI
   - Vault
 libraries:
   - it.unimi.dsi:fastutil:${dependency.fastutil.version}
   - com.alibaba:fastjson:${dependency.fastjson.version}
   - net.bytebuddy:byte-buddy:${dependency.bytebuddy.version}
   - org.flywaydb:flyway-core:${dependency.flyway.version}
+
+commands:
+  rcdoorfees:
+    description: Inspect and reconcile durable native door creation payments.
+    permission: rcdoors.fees.admin
+permissions:
+  rcdoors.fees.admin:
+    description: Record observed creation payment and structure outcomes.
+    default: op

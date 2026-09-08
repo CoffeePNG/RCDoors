@@ -355,21 +355,63 @@ public class CreatorTest
     }
 
     @Test
-    void testConfirmPriceInsufficientFunds()
+    void testConfirmPriceDoesNotDebitBeforeConstruction()
     {
         final var creator = newConfirmPriceCreator();
-
         Mockito.when(economyManager.isEconomyEnabled()).thenReturn(true);
-        Mockito.when(economyManager.getPrice(Mockito.any(), Mockito.anyInt())).thenReturn(OptionalDouble.empty());
-        Mockito.when(economyManager.buyStructure(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyInt()))
-            .thenReturn(false);
-
+        Mockito.when(economyManager.getPrice(Mockito.any(), Mockito.anyInt())).thenReturn(OptionalDouble.of(10));
         Assertions.assertTrue(creator.handleInput(true).join());
-        Mockito.verify(player).sendMessage(
-            UnitTestUtil.textArgumentMatcher("creator.base.error.insufficient_funds"));
+        Mockito.verify(economyManager, Mockito.never()).buyStructure(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.anyInt());
+        Assertions.assertTrue(creator.isActive());
+    }
 
-        Assertions.assertEquals(1, creator.getStepsCompleted());
+    @Test
+    void testChangedDisplayedPriceRequiresNewReview() throws Exception
+    {
+        final var creator = newConfirmPriceCreator();
+        var presented = Creator.class.getDeclaredField("pricePresented");
+        presented.setAccessible(true); presented.setBoolean(creator,true);
+        var amount = Creator.class.getDeclaredField("presentedPrice");
+        amount.setAccessible(true); amount.setDouble(creator,10);
+        Mockito.when(economyManager.isEconomyEnabled()).thenReturn(true);
+        Mockito.when(economyManager.getPrice(Mockito.any(), Mockito.anyInt())).thenReturn(OptionalDouble.of(20));
+        Assertions.assertTrue(creator.handleInput(true).join());
         Assertions.assertFalse(creator.isActive());
+        Mockito.verify(economyManager, Mockito.never()).buyStructure(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.anyInt());
+    }
+
+    @Test
+    void testCreationWaitsForDurableResultAndIgnoresDuplicateCompletion()
+    {
+        final var creator = newConfirmPriceCreator();
+        var pending = new CompletableFuture<IEconomyManager.CreationResult>();
+        Mockito.when(economyManager.getPrice(Mockito.any(),Mockito.anyInt())).thenReturn(OptionalDouble.empty());
+        Mockito.when(economyManager.createStructure(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.anyDouble(),Mockito.any()))
+            .thenReturn(pending);
+        Mockito.clearInvocations(player);
+        var structure = Mockito.mock(Structure.class);
+        creator.insertStructure(structure);
+        creator.insertStructure(structure);
+        Mockito.verify(economyManager,Mockito.times(1)).createStructure(Mockito.any(),Mockito.any(),Mockito.eq(structure),Mockito.eq(0d),Mockito.any());
+        Mockito.verify(player,Mockito.never()).sendMessage(UnitTestUtil.textArgumentMatcher("creator.base.success"));
+        pending.complete(new IEconomyManager.CreationResult("SUCCESS","receipt"));
+        Mockito.verify(player).sendMessage(UnitTestUtil.textArgumentMatcher("creator.base.success"));
+    }
+
+    @Test
+    void testCompatibilityProviderAllowsFreeInsertionAndRejectsPaidInsertion()
+    {
+        var legacy = Mockito.mock(IEconomyManager.class,Mockito.CALLS_REAL_METHODS);
+        var structure = Mockito.mock(Structure.class);
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        java.util.function.Supplier<CompletableFuture<DatabaseManager.StructureInsertResult>> insert = () ->
+        {
+            calls.incrementAndGet();
+            return CompletableFuture.completedFuture(new DatabaseManager.StructureInsertResult(java.util.Optional.of(structure),false));
+        };
+        Assertions.assertTrue(legacy.createStructure(java.util.UUID.randomUUID(),player,structure,0,insert).join().successful());
+        Assertions.assertFalse(legacy.createStructure(java.util.UUID.randomUUID(),player,structure,10,insert).join().successful());
+        Assertions.assertEquals(1,calls.get());
     }
 
     @Test

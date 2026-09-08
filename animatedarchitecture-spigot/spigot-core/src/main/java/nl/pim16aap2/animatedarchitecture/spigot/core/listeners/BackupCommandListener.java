@@ -35,7 +35,16 @@ public final class BackupCommandListener implements CommandExecutor
         log.atWarning().log("%s", errorMessage);
 
         if (sender instanceof Player player)
-            player.sendMessage(ChatColor.YELLOW + getReturnMessage(player));
+        {
+            final var presentation = plugin instanceof nl.pim16aap2.animatedarchitecture.spigot.core.AnimatedArchitecturePlugin doors
+                ? doors.getNativePresentation() : null;
+            if (presentation != null)
+                ((net.kyori.adventure.audience.Audience) player).sendMessage(presentation.component(
+                    isAdmin(player) ? "system.initialization-error" : "system.unavailable",
+                    net.kyori.adventure.text.Component.text(errorMessage)));
+            else
+                player.sendMessage(ChatColor.YELLOW + getReturnMessage(player));
+        }
 
         return true;
     }
@@ -73,6 +82,6 @@ public final class BackupCommandListener implements CommandExecutor
     {
         if (command == null)
             return;
-        command.setExecutor(plugin);
+        command.setExecutor(this);
     }
 }

@@ -147,6 +147,15 @@ public class CreatorTestsUtil
         throws Exception
     {
         mocks = MockitoAnnotations.openMocks(this);
+        Mockito.when(economyManager.createStructure(ArgumentMatchers.any(),ArgumentMatchers.any(),
+                ArgumentMatchers.any(),ArgumentMatchers.anyDouble(),ArgumentMatchers.any()))
+            .thenAnswer(invocation ->
+            {
+                java.util.function.Supplier<CompletableFuture<DatabaseManager.StructureInsertResult>> insert = invocation.getArgument(4);
+                return insert.get().thenApply(result -> new IEconomyManager.CreationResult(
+                    result != null && result.structure().isPresent() ? "SUCCESS" : "FAILED", "fixture receipt"));
+            });
+
 
         localizer = UnitTestUtil.initLocalizer();
         limitsManager = new LimitsManager(permissionsManager, config);

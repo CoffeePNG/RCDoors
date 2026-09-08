@@ -130,4 +130,35 @@ class OrganizationDoorAccessTest {
                 mock(AnimatedArchitectureSpigotPlatform.class),
                 directory.resolve("claims.properties")));
   }
+
+  @Test void automationCannotImpersonatePrimeOwnerForOutsiderOrRemovedMember() {
+    assertTrue(doors.claim(owner, "42", organization));
+    var primeOwner = UUID.randomUUID();
+    doors.register(owner, (door, actor, action) -> actor.equals(primeOwner) ? Decision.ALLOW : Decision.DENY);
+    for (var cause : List.of(StructureActionCause.REDSTONE, StructureActionCause.PROXIMITY)) {
+      var template = event();
+      when(template.getResponsible().getUUID()).thenReturn(primeOwner);
+      var automated = new StructureEventTogglePrepare(template.getSnapshot(), cause, StructureActionType.OPEN,
+          template.getResponsible(), 1.0, false, mock(Cuboid.class));
+      doors.beforeToggle(automated);
+      assertTrue(automated.isCancelled(), "Unknown outsider/removed member trigger must not borrow prime-owner identity");
+    }
+    var removedMember = event(); doors.beforeToggle(removedMember); assertTrue(removedMember.isCancelled());
+  }
+
+  @Test void trustedActorlessServerOperationsRemainUsableAndUnclaimedAutomationIsUnchanged() {
+    var template = event();
+    var redstone = new StructureEventTogglePrepare(template.getSnapshot(), StructureActionCause.REDSTONE,
+        StructureActionType.OPEN, template.getResponsible(), 1.0, false, mock(Cuboid.class));
+    doors.beforeToggle(redstone); assertFalse(redstone.isCancelled());
+    assertTrue(doors.claim(owner, "42", organization));
+    var server = new StructureEventTogglePrepare(template.getSnapshot(), StructureActionCause.SERVER,
+        StructureActionType.OPEN, null, 1.0, false, mock(Cuboid.class));
+    doors.beforeToggle(server); assertFalse(server.isCancelled());
+  }
+
+  @Test void nullPolicyResultFailsClosed() {
+    doors.register(owner, (door, actor, action) -> null);
+    var request = event(); doors.beforeToggle(request); assertTrue(request.isCancelled());
+  }
 }

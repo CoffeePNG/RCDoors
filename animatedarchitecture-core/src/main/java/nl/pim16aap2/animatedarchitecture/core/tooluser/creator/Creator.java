@@ -168,6 +168,13 @@ public abstract class Creator extends ToolUser
     @GuardedBy("this")
     private @Nullable IWorld world;
 
+    private final java.util.UUID creationReceipt = java.util.UUID.randomUUID();
+    private boolean creationStarted;
+    private boolean pricePresented;
+    private double presentedPrice;
+    private boolean priceConfirmed;
+    private double confirmedPrice;
+
     /**
      * Whether the structure is created in the locked (true) or unlocked (false) state.
      */
@@ -377,8 +384,7 @@ public abstract class Creator extends ToolUser
         factoryCompleteProcess = stepFactory
             .stepName("COMPLETE_CREATION_PROCESS")
             .stepExecutor(new StepExecutorVoid(this::completeCreationProcess))
-            .textSupplier(text -> text.append(
-                localizer.getMessage("creator.base.success"), TextType.SUCCESS, getStructureArg()))
+            .textSupplier(text -> text.append(localizer.getMessage("creator.base.processing"), TextType.INFO))
             .waitForUserInput(false);
     }
 
@@ -581,8 +587,7 @@ public abstract class Creator extends ToolUser
      *
      * @return True, so that it fits the functional interface being used for the steps.
      * <p>
-     * If the insertion fails for whatever reason, it'll just be ignored, because at that point, there's no sense in
-     * continuing the creation process anyway.
+     * Insertion completion sends the final result; paid attempts retain a durable recovery receipt.
      */
     protected synchronized boolean completeCreationProcess()
     {
@@ -1040,17 +1045,15 @@ public abstract class Creator extends ToolUser
             abort();
             return true;
         }
-        if (!buyStructure())
+        final double currentPrice = getPrice().orElse(0);
+        if (pricePresented && Double.compare(currentPrice, presentedPrice) != 0)
         {
-            getPlayer().sendMessage(textFactory.newText().append(
-                localizer.getMessage("creator.base.error.insufficient_funds"),
-                TextType.ERROR,
-                arg -> arg.highlight(localizer.getStructureType(getStructureType())),
-                arg -> arg.highlight(getPrice().orElse(0)))
-            );
+            creationMessage("price-changed");
             abort();
             return true;
         }
+        confirmedPrice = currentPrice;
+        priceConfirmed = true;
 
         goToNextStep();
         return true;
@@ -1129,25 +1132,52 @@ public abstract class Creator extends ToolUser
      * @param structure
      *     The structure to send to the {@link DatabaseManager}.
      */
-    protected void insertStructure(Structure structure)
+    protected synchronized void insertStructure(Structure structure)
     {
-        databaseManager
-            .addStructure(structure, getPlayer())
-            .thenAccept(result ->
+        if (creationStarted)
+            return;
+        creationStarted = true;
+        final double price = priceConfirmed ? confirmedPrice : getPrice().orElse(0);
+        if (!priceConfirmed && price != 0)
+        {
+            creationMessage("confirmation-required");
+            return;
+        }
+        CompletableFuture.completedFuture(null)
+            .thenCompose(ignored -> economyManager.createStructure(
+                creationReceipt, getPlayer(), structure, price,
+                () -> databaseManager.addStructure(structure, getPlayer())))
+            .whenComplete((result, failure) -> executor.runOnMainThread(() ->
             {
-                if (result.cancelled())
+                if (failure == null && result != null && result.successful())
                 {
-                    getPlayer().sendError(
-                        textFactory, localizer.getMessage("creator.base.error.creation_cancelled"));
-                    return;
+                    getPlayer().sendMessage(textFactory.newText().append(
+                        localizer.getMessage("creator.base.success"), TextType.SUCCESS, getStructureArg()));
+                    if (price > 0)
+                        creationMessage("paid", "amount", java.math.BigDecimal.valueOf(price).toPlainString(),
+                            "receipt", creationReceipt);
                 }
+                else
+                {
+                    final String key = result == null ? "review-required" : switch (result.status())
+                    {
+                        case "DEBIT_FAILED" -> "payment-rejected";
+                        case "REFUNDED" -> "refunded";
+                        case "REFUND_READY", "REFUND_DISPATCHING" -> "refund-pending";
+                        case "DEBIT_REVIEW", "INSERT_REVIEW", "REFUND_REVIEW", "NEEDS_REVIEW" -> "review-required";
+                        default -> "failed";
+                    };
+                    creationMessage(key, "receipt", creationReceipt, "detail", result == null ? "" : result.detail());
+                }
+                if (failure != null)
+                    log.atSevere().withCause(failure).log("Creation receipt failed: %s", creationReceipt);
+            }));
+    }
 
-                if (result.structure().isEmpty())
-                {
-                    getPlayer().sendError(textFactory, localizer.getMessage("constants.error.generic"));
-                    log.atSevere().log("Failed to insert structure after creation!");
-                }
-            }).exceptionally(FutureUtil::exceptionally);
+    private void creationMessage(String key, Object... arguments)
+    {
+        if (!economyManager.sendCreationMessage(getPlayer(), key, arguments))
+            getPlayer().sendError(textFactory, localizer.getMessage("constants.error.generic"));
     }
 
     /**
@@ -1169,15 +1199,13 @@ public abstract class Creator extends ToolUser
     }
 
     /**
-     * Gets the price of the structure based on its volume. If the structure is free because the price is &lt;= 0 or the
-     * {@link IEconomyManager} is disabled, the price will be empty.
+     * Gets the configured price based on volume. A missing wallet provider must not turn a paid structure into a
+     * free one; zero configured prices remain free.
      *
      * @return The price of the structure if a positive price could be found.
      */
     protected synchronized OptionalDouble getPrice()
     {
-        if (!economyManager.isEconomyEnabled())
-            return OptionalDouble.empty();
         return economyManager.getPrice(getStructureType(), Util.requireNonNull(cuboid, "cuboid").getVolume());
     }
 
@@ -1372,14 +1400,16 @@ public abstract class Creator extends ToolUser
         return text;
     }
 
-    private Text confirmPriceTextSupplier(Text text)
+    private synchronized Text confirmPriceTextSupplier(Text text)
     {
+        presentedPrice = getPrice().orElse(0);
+        pricePresented = true;
         return text.append(
             localizer.getMessage("creator.base.confirm_structure_price"),
             TextType.INFO,
 
             arg -> arg.info(localizer.getStructureType(getStructureType())),
-            arg -> arg.highlight(getPrice().orElse(0)),
+            arg -> arg.highlight(presentedPrice),
 
             arg -> arg.clickable(
                 localizer.getMessage("creator.base.confirm_structure_price.arg2.message"),

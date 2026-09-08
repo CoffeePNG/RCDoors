@@ -83,7 +83,7 @@ class CreateStructureGui implements IGuiPage
             guiSetup
         );
 
-        gui.setFiller(FILLER);
+        gui.setFiller(GuiUtil.skin(animatedArchitecturePlugin, "create", "filler", FILLER));
 
         populateGUI(gui, types);
 
@@ -100,7 +100,7 @@ class CreateStructureGui implements IGuiPage
     {
         gui.addElement(new GuiBackElement(
             'f',
-            new ItemStack(Material.ARROW),
+            GuiUtil.skin(animatedArchitecturePlugin, "create", "back", new ItemStack(Material.ARROW)),
             localizer.getMessage("gui.new_structure_page.back_button"))
         );
     }
@@ -112,7 +112,7 @@ class CreateStructureGui implements IGuiPage
         {
             final GuiElement element = new StaticGuiElement(
                 'g',
-                new ItemStack(Material.WRITABLE_BOOK),
+                GuiUtil.skin(animatedArchitecturePlugin, "create", "structure-type", new ItemStack(Material.WRITABLE_BOOK)),
                 click ->
                 {
                     commandFactory
@@ -130,7 +130,7 @@ class CreateStructureGui implements IGuiPage
             );
             group.addElement(element);
         }
-        group.setFiller(FILLER);
+        group.setFiller(GuiUtil.skin(animatedArchitecturePlugin, "create", "filler", FILLER));
         gui.addElement(group);
     }
 

@@ -57,6 +57,17 @@ public final class LoginMessageListener extends AbstractListener
 
     private void sendLoginMessage(Player player)
     {
+        if (!plugin.isEnabled() || !player.isOnline()
+            || !player.hasPermission(Constants.PERMISSION_PREFIX_ADMIN + "restart"))
+            return;
+        final var presentation = plugin.getNativePresentation();
+        final String error = plugin.getInitErrorMessage();
+        if (presentation != null && error != null)
+        {
+            ((net.kyori.adventure.audience.Audience) player).sendMessage(presentation.component(
+                "system.initialization-error", net.kyori.adventure.text.Component.text(error)));
+            return;
+        }
         final Text text = textFactory.newText();
 
         addErrorMessage(text);

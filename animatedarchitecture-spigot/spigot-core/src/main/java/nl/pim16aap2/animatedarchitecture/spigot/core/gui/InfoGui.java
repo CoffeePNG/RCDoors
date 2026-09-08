@@ -103,7 +103,7 @@ class InfoGui implements IGuiPage
             localizer.getMessage("gui.info_page.title", structure.getNameAndUid()),
             guiSetup
         );
-        gui.setFiller(FILLER);
+        gui.setFiller(GuiUtil.skin(animatedArchitecturePlugin, "info", "filler", FILLER));
 
         populateGUI(gui);
 
@@ -120,7 +120,7 @@ class InfoGui implements IGuiPage
     {
         gui.addElement(new StaticGuiElement(
             'h',
-            new ItemStack(Material.BOOK),
+            GuiUtil.skin(animatedArchitecturePlugin, "info", "summary", new ItemStack(Material.BOOK)),
             localizer.getMessage(
                 "gui.info_page.header",
                 localizer.getMessage(structure.getType().getLocalizationKey()),
@@ -129,7 +129,7 @@ class InfoGui implements IGuiPage
 
         gui.addElement(new GuiBackElement(
             'f',
-            new ItemStack(Material.ARROW),
+            GuiUtil.skin(animatedArchitecturePlugin, "info", "back", new ItemStack(Material.ARROW)),
             localizer.getMessage("gui.info_page.back_button"))
         );
     }
@@ -145,7 +145,7 @@ class InfoGui implements IGuiPage
             attributeElements.put(attribute, element);
             group.addElement(element);
         }
-        group.setFiller(FILLER);
+        group.setFiller(GuiUtil.skin(animatedArchitecturePlugin, "info", "filler", FILLER));
         gui.addElement(group);
     }
 
