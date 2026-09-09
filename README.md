@@ -178,9 +178,16 @@ The interface's default creation implementation supports free structures and rej
 unless a durable provider implements them.
 
 
-RC-owned creation fee messages and recovery commands use the `rcdoors-fees` RCUI catalog.
-Operators edit `plugins/RCUI/messages/rcdoors-fees.yml`; bundled `fees-messages.yml` supplies defaults.
-Player names, receipt descriptions and operator reasons are inserted as unparsed placeholders.
+Creation fee messages and recovery commands use the `fees` section of the same
+`plugins/RCUI/messages/rcdoors.yml` catalog as all other RCDoors messages. They share its
+prefix. Bundled `messages.yml` supplies every default; player names, receipt descriptions
+and operator reasons remain unparsed placeholders.
+
+RCUI imports an existing `rcdoors-fees.yml` into `messages.fees` in `rcdoors.yml` on startup.
+Existing destination edits take precedence; custom source messages and intentionally muted
+values are preserved. Once the combined catalog is saved, RCUI archives the old source so
+there is one active message YAML for RCDoors. Backups remain available in RCUI's backup
+storage rather than the active messages directory.
 
 ## Native messages and menu buttons through RCUI
 

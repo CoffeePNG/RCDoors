@@ -8,11 +8,11 @@ import net.republicraft.rcui.api.RCUI;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/** RC-owned creation payment presentation; upstream native text adapters remain separate. */
+/** RC-owned creation payment presentation shares the plugin's central RCUI catalog. */
 final class FeeMessages {
     private final MessageBundle bundle;
     FeeMessages(JavaPlugin plugin) {
-        this(RCUI.messages(plugin).register(plugin,"rcdoors-fees","fees-messages.yml"));
+        this(RCUI.messages(plugin).register(plugin,"rcdoors","messages.yml"));
     }
     FeeMessages(MessageBundle bundle) { this.bundle = Objects.requireNonNull(bundle); }
     void send(CommandSender sender,String key,Object... arguments) {
@@ -20,6 +20,6 @@ final class FeeMessages {
         TagResolver[] values = new TagResolver[arguments.length/2];
         for(int i=0;i<arguments.length;i+=2)
             values[i/2] = Placeholder.unparsed(String.valueOf(arguments[i]),String.valueOf(arguments[i+1]));
-        bundle.send((net.kyori.adventure.audience.Audience)sender,key,values);
+        bundle.send((net.kyori.adventure.audience.Audience)sender,"fees." + key,values);
     }
 }

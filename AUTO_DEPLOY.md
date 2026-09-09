@@ -11,16 +11,30 @@ Requirements: Java 25, Maven, Python 3 and PyYAML. Keep the dependency repositor
 as siblings with their committed `main` branches up to date.
 
 1. Edit and stage the intended source files.
-2. `python scripts/publish_local.py prepare`
+2. `python scripts/publish_local.py prepare --tests <Surefire-selection>`
 3. Commit the staged changes on `main`.
 4. `python scripts/publish_local.py publish`
+
+Preparation requires an explicit verification choice. Use `--tests MessageCatalogTest`
+(or `--tests TestClass#method`) for affected Maven behavior. Add, for example,
+`--python-tests scripts.tests.test_publish_selection.VerificationSelectionTests`
+only when publisher logic changed. Maven integration-test suites are skipped for
+focused verification. Reactor modules without a selected test may skip; preparation
+fails if no selected test actually executes anywhere.
+
+Use `--package-only` when the relevant verification is a configuration/manual check
+or selected Python tests; it skips Maven test compilation and execution. Full Maven
+and Python discovery runs require `--full-suite` and explicit user authorization for
+the current work. A bare `prepare` fails instead of silently choosing a full suite.
+Unchanged dependencies always install with tests skipped, using separate cache keys.
+The artifact manifest records the chosen scope and named checks.
 
 The publisher pushes source and the tested JAR using existing Git SSH access;
 no new API token is needed. A plain source-only push does not deploy. A failed
 build cannot be published, and publication refuses a commit whose source tree
 differs from the tested snapshot. Logs and the tested artifact are stored under
 the repository's Git metadata in `local-publish`. Dependency build results are
-reused only when their source commits, tool settings and installed-file hashes match.
+reused only when their source commits, package-only command, tool settings and installed-file hashes match.
 
 The manifest records the exact source and dependency commits and JAR checksum.
 Older source commits are skipped by the NAS. Previous published JARs remain in

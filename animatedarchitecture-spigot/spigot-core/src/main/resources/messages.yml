@@ -1,3 +1,4 @@
+merged-catalogs: {rcdoors-fees: fees}
 # Native Doors messages managed by RCUI in namespace rcdoors.
 # <native> preserves the selected language and upstream localization patches.
 # Each native key has a .text leaf so keys with child keys remain distinct in YAML.
@@ -954,3 +955,24 @@ cloud.help.showing_results_for_query.text: 'Showing search results for query'
 cloud.help.entry.text: '<native>'
 cloud.help.page-status.text: '<native>'
 cloud.help.argument-entry.text: '<native>'
+
+# Creation fee confirmations and recovery messages share this catalog and its prefix.
+fees:
+  price-changed: '<red>The creation price changed. Review a new creation quote.</red>'
+  confirmation-required: '<red>Review and confirm the current creation price first.</red>'
+  receipt-required: '<red>Paid creation requires a reviewed creation receipt.</red>'
+  paid: '<green>Fee paid: <amount>.</green> <gray>Receipt: <receipt></gray>'
+  payment-rejected: '<red>Payment was rejected; no structure was created.</red> <gray>Receipt: <receipt></gray>'
+  refunded: '<yellow>Creation cancelled; the fee was refunded.</yellow> <gray>Receipt: <receipt></gray>'
+  refund-pending: '<yellow>Creation cancelled; your refund is pending.</yellow> <gray>Receipt: <receipt></gray>'
+  review-required: '<yellow>Creation needs staff review.</yellow> <gray>Receipt: <receipt></gray>'
+  failed: '<red>Creation could not complete.</red> <gray>Receipt: <receipt>. <detail></gray>'
+  permission-denied: '<red>You do not have permission to manage creation fee receipts.</red>'
+  storage-unavailable: '<red>Creation receipt storage is unavailable.</red>'
+  review-page: '<gold>Creation payment reviews — page <page></gold>'
+  review-entry: '<yellow><receipt></yellow> <gray><state>; player=<player>; amount=<amount>; world=<world>; structure=<structure>; <detail></gray>'
+  resolution-failed: '<red>Could not record the observed outcome. The receipt remains held.</red>'
+  resolution-recorded: '<green>Observed outcome recorded. Pending refunds are recovered every 30 seconds.</green>'
+  resolution-rejected: '<yellow>The receipt is active or that decision does not match its review state.</yellow>'
+  invalid-input: '<red>Invalid receipt, page or decision: <detail></red>'
+  usage: '<gray>/rcdoorfees review [page] | /rcdoorfees resolve receipt-UUID debit-applied|debit-not-applied|created|not-created|refund-applied|refund-not-applied observed-outcome-reason</gray>'

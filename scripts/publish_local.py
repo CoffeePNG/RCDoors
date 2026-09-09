@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 from prepare_artifact import prepare
@@ -46,7 +47,58 @@ def check_source(repo, manifest):
         raise RuntimeError('There are staged changes after the build. Commit and prepare again.')
 
 
-def build(repo, maven):
+def verification_commands(maven, tests=None, python_tests=(), package_only=False, full_suite=False):
+    """Construct the explicitly selected checks; never infer permission for a whole suite."""
+    if sum((tests is not None, bool(package_only), bool(full_suite))) != 1:
+        raise ValueError('Choose --tests, --package-only, or explicitly --full-suite for prepare.')
+    python_tests = tuple(python_tests)
+    if any(not name.strip() or name == 'discover' or name.startswith('-') for name in python_tests):
+        raise ValueError('--python-tests requires unittest module/class/method names, not discovery options.')
+    if full_suite and python_tests:
+        raise ValueError('--full-suite already selects the Python suite; do not combine it with --python-tests.')
+    maven_command = [maven, '--batch-mode', '--no-transfer-progress']
+    if tests is not None:
+        tests = tests.strip()
+        if not tests or tests in ('*', '**') or any(not item.strip() for item in tests.split(',')):
+            raise ValueError('--tests requires a focused Surefire selection; use --full-suite for all tests.')
+        maven_command += ['-Dtest=' + tests, '-Dsurefire.failIfNoSpecifiedTests=false', '-DskipITs=true']
+    elif package_only:
+        maven_command += ['-Dmaven.test.skip=true', '-DskipTests=true', '-DskipITs=true']
+    maven_command += ['clean', 'verify']
+    commands = []
+    if full_suite:
+        commands.append([sys.executable, '-m', 'unittest', 'discover', '-s', 'scripts/tests', '-v'])
+    elif python_tests:
+        commands.append([sys.executable, '-m', 'unittest', '-v', *python_tests])
+    commands.append(maven_command)
+    return commands
+
+
+def dependency_command(maven, arguments):
+    # Upstream source is unchanged in this request; install its artifacts without unrelated tests.
+    return [maven, '--batch-mode', '--no-transfer-progress', *arguments,
+            '-Dmaven.test.skip=true', '-DskipTests=true', '-DskipITs=true', 'clean', 'install']
+
+
+def dependency_cache_key(name, command, sources, java_home):
+    return hashlib.sha256(json.dumps(
+        ['dependencies-package-only-v1', name, command, sources, java_home],
+        sort_keys=True).encode()).hexdigest()
+
+
+def require_executed_tests(workspace):
+    # Reactor modules without matching tests may skip, but a typo must not create a tested manifest.
+    executed = 0
+    for report in workspace.glob('**/target/surefire-reports/TEST-*.xml'):
+        suite = ET.parse(report).getroot()
+        executed += int(suite.get('tests', '0')) - int(suite.get('skipped', '0'))
+    if executed < 1:
+        raise RuntimeError('No selected Maven tests executed; check --tests or explicitly use --package-only.')
+    return executed
+
+
+def build(repo, maven, tests=None, python_tests=(), package_only=False, full_suite=False):
+    commands = verification_commands(maven, tests, python_tests, package_only, full_suite)
     config = load_config(repo)
     state = state_directory(repo)
     # An old successful build must not remain publishable after a failed attempt.
@@ -78,15 +130,16 @@ def build(repo, maven):
             name, arguments = dependency['name'], dependency['arguments']
             required = ['RCPlatform'] if name == 'RCPlatform' else ['RCPlatform', 'RCUI'] if name == 'RCUI' else ['RCPlatform', 'RCUI', 'RCBusiness']
             dependency_sources = {n: dependencies[n] for n in required if n in dependencies}
-            key = hashlib.sha256(json.dumps([name, arguments, dependency_sources, os.environ.get('JAVA_HOME'), str(maven)], sort_keys=True).encode()).hexdigest()
+            command = dependency_command(maven, arguments)
+            key = dependency_cache_key(name, command, dependency_sources, os.environ.get('JAVA_HOME'))
             cache_file = cache_root / (key + '.json')
             cached = json.loads(cache_file.read_text()) if cache_file.exists() else {}
             if cached and all(Path(p).is_file() and digest(Path(p)) == sha for p, sha in cached.items()):
-                print('Reusing locally verified dependency: ' + name, flush=True)
+                print('Reusing locally packaged dependency (tests skipped): ' + name, flush=True)
                 continue
             log = state / (name + '-dependency.log')
             with log.open('w') as output:
-                run([maven, '--batch-mode', '--no-transfer-progress', *arguments, 'clean', 'install'], work_root / name, stdout=output, stderr=subprocess.STDOUT)
+                run(command, work_root / name, stdout=output, stderr=subprocess.STDOUT)
             installed = {}
             for line in log.read_text(errors='replace').splitlines():
                 if '[INFO] Installing ' in line and ' to ' in line:
@@ -96,17 +149,26 @@ def build(repo, maven):
             if installed:
                 cache_file.write_text(json.dumps(installed))
         log = state / 'build.log'
-        print('Building and testing the staged source. Log: ' + str(log), flush=True)
+        print('Packaging staged source with the selected verification. Log: ' + str(log), flush=True)
         with log.open('w') as output:
-            run([sys.executable, '-m', 'unittest', 'discover', '-s', 'scripts/tests', '-v'], workspace, stdout=output, stderr=subprocess.STDOUT)
-            run([maven, '--batch-mode', '--no-transfer-progress', 'clean', 'verify'], workspace, stdout=output, stderr=subprocess.STDOUT)
+            for command in commands:
+                output.write('Running: ' + subprocess.list2cmdline(command) + '\n')
+                output.flush()
+                run(command, workspace, stdout=output, stderr=subprocess.STDOUT)
+        executed = require_executed_tests(workspace) if tests is not None else None
         artifact = state / (config['identity'] + '.jar')
         prepare(workspace / config['artifact_directory'], config['identity'], artifact)
         manifest = {
             'schema': 1, 'repository': config['repository'], 'identity': config['identity'],
             'source_tree': tree, 'jar': artifact.name, 'sha256': digest(artifact),
             'dependencies': dependencies, 'tested_at': datetime.now(timezone.utc).isoformat(),
-            'tests': 'python unittest and mvn clean verify',
+            'tests': 'full suite' if full_suite else 'focused Maven: ' + tests if tests is not None else 'package only (Maven tests skipped)',
+            'verification': {
+                'mode': 'full-suite' if full_suite else 'focused' if tests is not None else 'package-only',
+                'maven_selection': tests, 'maven_tests_executed': executed,
+                'python_selections': list(python_tests), 'python_full_suite': bool(full_suite),
+                'dependency_tests': 'skipped',
+            },
         }
         (state / 'prepared.json').write_text(json.dumps(manifest, indent=2) + '\n')
         print('Build passed. Commit the staged changes, then run: python scripts/publish_local.py publish', flush=True)
@@ -168,11 +230,22 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['prepare', 'publish'])
     parser.add_argument('--maven', default=shutil.which('mvn.cmd') or shutil.which('mvn') or 'mvn')
+    checks = parser.add_mutually_exclusive_group()
+    checks.add_argument('--tests', help='Focused Maven Surefire selection, such as MessageCatalogTest or TestClass#method')
+    checks.add_argument('--package-only', action='store_true', help='Package without running Maven tests')
+    checks.add_argument('--full-suite', action='store_true', help='Explicitly run the full Maven and Python suites')
+    parser.add_argument('--python-tests', nargs='+', default=[], help='Explicit unittest module/class/method names')
     args = parser.parse_args()
     repo = Path(__file__).resolve().parent.parent
     if args.command == 'prepare':
-        build(repo, args.maven)
+        try:
+            verification_commands(args.maven, args.tests, args.python_tests, args.package_only, args.full_suite)
+        except ValueError as error:
+            parser.error(str(error))
+        build(repo, args.maven, args.tests, args.python_tests, args.package_only, args.full_suite)
     else:
+        if args.tests is not None or args.python_tests or args.package_only or args.full_suite:
+            parser.error('Verification options apply to prepare, not publish.')
         publish(repo)
 
 
