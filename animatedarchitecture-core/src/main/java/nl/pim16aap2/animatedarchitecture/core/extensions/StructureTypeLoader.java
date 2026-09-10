@@ -281,11 +281,11 @@ public final class StructureTypeLoader extends Restartable
         switch (preloadCheck)
         {
             case PASS:
-                log.atInfo().log("Loading structure type: %s", structureTypeInfo.getFullKey());
+                log.atFine().log("Loading structure type: %s", structureTypeInfo.getFullKey());
                 break;
 
             case ALREADY_LOADED:
-                log.atInfo().log("Structure type '%s' is already loaded, skipping.", structureTypeInfo.getFullKey());
+                log.atFine().log("Structure type '%s' is already loaded, skipping.", structureTypeInfo.getFullKey());
                 break;
 
             case API_VERSION_NOT_SUPPORTED:
@@ -475,6 +475,13 @@ public final class StructureTypeLoader extends Restartable
         final var loadedStructureTypes =
             new StructureTypeInitializer(acceptedTypes, structureTypeClassLoader, config.debug())
                 .loadStructureTypes();
+
+        if (!loadedStructureTypes.isEmpty())
+            log.atInfo().log(
+                "Loaded %d structure type(s): %s",
+                loadedStructureTypes.size(),
+                loadedStructureTypes.stream().map(StructureType::getSimpleName).collect(Collectors.joining(", "))
+            );
 
         structureTypeManager.register(loadedStructureTypes);
         return loadedStructureTypes;

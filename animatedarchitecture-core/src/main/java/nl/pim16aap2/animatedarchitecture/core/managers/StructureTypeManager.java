@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This class manages all {@link StructureType}s. Before a type can be used, it will have to be registered here.
@@ -160,7 +161,7 @@ public final class StructureTypeManager implements IDebuggable
     @GuardedBy("$lock")
     private void register0(StructureType structureType, boolean isEnabled)
     {
-        log.atInfo().log(
+        log.atFine().log(
             "Registering structure type: '%s'. Enabled: %s", structureType.getFullNameWithVersion(), isEnabled);
 
         final @Nullable Boolean result = registeredStructureTypes0.put(structureType, isEnabled);
@@ -253,6 +254,13 @@ public final class StructureTypeManager implements IDebuggable
     {
         registerWithLocalizer(structureTypes);
         structureTypes.forEach(structureType -> register0(structureType, DEFAULT_IS_ENABLED));
+
+        if (!structureTypes.isEmpty())
+            log.atInfo().log(
+                "Registered %d structure type(s): %s",
+                structureTypes.size(),
+                structureTypes.stream().map(StructureType::getSimpleName).collect(Collectors.joining(", "))
+            );
     }
 
     @Override
