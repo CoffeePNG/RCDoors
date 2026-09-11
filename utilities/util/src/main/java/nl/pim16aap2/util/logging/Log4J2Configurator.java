@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.ConsoleAppender;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
 import org.apache.logging.log4j.core.appender.rolling.DefaultRolloverStrategy;
 import org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy;
@@ -80,11 +81,17 @@ public final class Log4J2Configurator
      * Sets the path to log to.
      * <p>
      * This method will create a new appender and logger for the specified path.
+     * <p>
+     * This also replaces the console prefix for our log messages (normally the fully qualified name of the class
+     * that logged the message) with the given display name, so that messages show up in the console as e.g.
+     * {@code [displayName]} instead of {@code [nl.pim16aap2.animatedarchitecture.spigot.core.SomeClass]}.
      *
      * @param path
      *     The path to log to.
+     * @param displayName
+     *     The name to show as the console prefix for our log messages, e.g. the plugin's name.
      */
-    public void setLogPath(Path path)
+    public void setLogPath(Path path, String displayName)
     {
         final LoggerContext loggerContext = (LoggerContext) LogManager.getContext(false);
         final Configuration configuration = loggerContext.getConfiguration();
@@ -104,7 +111,7 @@ public final class Log4J2Configurator
 
         final String logFileBaseName = path.toAbsolutePath().resolve("aa").toString();
 
-        final RollingFileAppender appender = RollingFileAppender
+        final RollingFileAppender fileAppender = RollingFileAppender
             .newBuilder()
             .withStrategy(rollOverStrategy)
             .setConfiguration(configuration)
@@ -116,7 +123,22 @@ public final class Log4J2Configurator
             .setLayout(pattern)
             .setFilter(levelFilter)
             .build();
-        appender.start();
+        fileAppender.start();
+
+        final var consolePattern = PatternLayout
+            .newBuilder()
+            .withPattern("%highlight{[%d{HH:mm:ss} %level]}: [" + displayName + "] %message%n")
+            .build();
+
+        final ConsoleAppender consoleAppender = ConsoleAppender
+            .newBuilder()
+            .setTarget(ConsoleAppender.Target.SYSTEM_OUT)
+            .setConfiguration(configuration)
+            .setName(LOGGER_NAME + ".console")
+            .setLayout(consolePattern)
+            .setFilter(levelFilter)
+            .build();
+        consoleAppender.start();
 
         // Create a custom filter to log only messages from AnimatedArchitecture and its utilities.
         final Filter customFilter = new AbstractFilter()
@@ -132,9 +154,14 @@ public final class Log4J2Configurator
             }
         };
 
+        // Additivity is disabled so that our messages are only handled by our own appenders above. Otherwise, they
+        // would *also* propagate to the server's root console appender, which would print them a second time using
+        // the fully qualified class name instead of our display name. One side effect: our console/log messages no
+        // longer land in the server's own combined logs/latest.log; they remain fully available in our own log
+        // file at the path passed to this method instead.
         final LoggerConfig loggerConfig = LoggerConfig
             .newBuilder()
-            .withAdditivity(true)
+            .withAdditivity(false)
             .withConfig(configuration)
             .withtFilter(levelFilter)
             .withLevel(Level.ALL)
@@ -144,7 +171,8 @@ public final class Log4J2Configurator
         configuration.getCustomLevels();
 
         loggerConfig.addFilter(customFilter);
-        loggerConfig.addAppender(appender, Level.ALL, levelFilter);
+        loggerConfig.addAppender(fileAppender, Level.ALL, levelFilter);
+        loggerConfig.addAppender(consoleAppender, Level.ALL, levelFilter);
         configuration.addLogger(LOGGER_NAME, loggerConfig);
 
         loggerContext.updateLoggers();

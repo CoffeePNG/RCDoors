@@ -89,7 +89,7 @@ public final class AnimatedArchitecturePlugin extends JavaPlugin implements IAni
     public AnimatedArchitecturePlugin()
     {
         importLegacyData();
-        Log4J2Configurator.getInstance().setLogPath(getDataFolder().toPath());
+        Log4J2Configurator.getInstance().setLogPath(getDataFolder().toPath(), getName());
 
         mainThreadId = Thread.currentThread().threadId();
         restartableHolder = new RestartableHolder();
